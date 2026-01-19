@@ -1,8 +1,8 @@
-# NyayGuru AI Pro
+# NYAYASHASTRA
 
 <div align="center">
 
-![NyayGuru AI Pro](https://img.shields.io/badge/NyayGuru-AI%20Pro-blueviolet?style=for-the-badge)
+![NYAYASHASTRA](https://img.shields.io/badge/NYAYASHASTRA-AI%20Pro-blueviolet?style=for-the-badge)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 
@@ -56,8 +56,8 @@ Side-by-side comparison of old IPC sections with new BNS equivalents.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/nyayguru-ai-pro.git
-cd nyayguru-ai-pro
+git clone https://github.com/your-repo/NYAYASHASTRA-ai-pro.git
+cd NYAYASHASTRA-ai-pro
 
 # Install dependencies
 npm install
@@ -150,7 +150,7 @@ python -m uvicorn app.main:app --reload --port 8000
 ## 📁 Project Structure
 
 ```
-nyayguru-ai-pro/
+NYAYASHASTRA-ai-pro/
 ├── src/                          # Frontend source
 │   ├── components/               # React components
 │   │   ├── AgentOrchestration3D.tsx
@@ -247,7 +247,7 @@ API_PORT=8000
 API_DEBUG=true
 
 # Database
-DATABASE_URL=sqlite:///./nyayguru.db
+DATABASE_URL=sqlite:///./NYAYASHASTRA.db
 
 # Vector Store
 CHROMA_PERSIST_DIR=./chroma_db
@@ -258,7 +258,18 @@ OPENAI_API_KEY=your_key_here
 
 # CORS
 CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# Clerk Authentication
+CLERK_SECRET_KEY=your_clerk_secret_key
 ```
+
+---
+
+## 🔐 Authentication
+This project uses **Clerk** for user authentication. 
+- **Frontend**: Users are redirected to sign in before accessing legal tools.
+- **Backend**: API requests are verified using Clerk JWT tokens.
+
 
 ---
 
@@ -311,6 +322,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ for Indian Legal Community**
 
-*NyayGuru AI Pro - न्यायगुरु AI प्रो*
+*NYAYASHASTRA - न्यायगुरु AI प्रो*
 
 </div>
