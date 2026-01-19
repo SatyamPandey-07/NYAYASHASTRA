@@ -80,36 +80,31 @@ export const ChatInterface = ({ messages, onSendMessage, isProcessing, language 
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                className={`max-w-[85%] rounded-lg px-6 py-4 relative group ${
                   message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'glass border border-border'
+                    ? 'border-l-4 border-l-secondary bg-transparent pl-4 pr-0 text-right'
+                    : 'legal-card text-left'
                 }`}
               >
-                <p className={`text-sm leading-relaxed ${language === 'hi' ? 'text-hindi' : ''}`}>
+                <div className={`text-sm leading-relaxed whitespace-pre-wrap ${language === 'hi' ? 'text-hindi' : ''} ${message.role === 'user' ? 'text-foreground font-serif text-lg' : 'text-foreground/90'}`}>
                   {language === 'hi' && message.contentHindi ? message.contentHindi : message.content}
-                </p>
+                </div>
 
                 {/* Citations */}
                 {message.citations && message.citations.length > 0 && (
-                  <div className="mt-3 border-t border-border/30 pt-3">
-                    <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                      <Scale className="h-3 w-3" />
-                      {language === 'en' ? 'Citations' : 'उद्धरण'}
-                    </p>
-                    <div className="space-y-1">
-                      {message.citations.map((citation, idx) => (
-                        <a
-                          key={citation.id}
-                          href={citation.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block text-xs text-primary hover:underline"
-                        >
-                          [{idx + 1}] {citation.title}
-                        </a>
-                      ))}
-                    </div>
+                  <div className="mt-4 border-t border-border/40 pt-3 flex flex-wrap gap-2">
+                    {message.citations.map((citation, idx) => (
+                      <a
+                        key={citation.id}
+                        href={citation.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="chip"
+                      >
+                        <Scale className="h-3 w-3 mr-1" />
+                        <span className="truncate max-w-[200px]">{citation.title}</span>
+                      </a>
+                    ))}
                   </div>
                 )}
               </div>
@@ -144,36 +139,37 @@ export const ChatInterface = ({ messages, onSendMessage, isProcessing, language 
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-border p-4">
-        <div className="glass-strong rounded-2xl p-2">
+      <div className="border-t border-border p-6 bg-card/30">
+        <div className="relative">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholderText}
-            className={`min-h-[60px] resize-none border-0 bg-transparent focus-visible:ring-0 ${
+            className={`input-legal min-h-[50px] resize-none text-base pr-24 ${
               language === 'hi' ? 'text-hindi' : ''
             }`}
             disabled={isProcessing}
           />
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                <Upload className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                <Mic className="h-4 w-4" />
-              </Button>
-            </div>
+          <div className="absolute right-0 bottom-2 flex gap-2">
             <Button
               onClick={handleSubmit}
               disabled={!input.trim() || isProcessing}
-              className="h-10 rounded-xl px-6 glow-primary"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full"
             >
-              <Send className="h-4 w-4 mr-2" />
-              {language === 'en' ? 'Send' : 'भेजें'}
+              <Send className="h-5 w-5" />
             </Button>
           </div>
+        </div>
+        <div className="flex gap-4 mt-2">
+           <button className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
+             <Upload className="h-3 w-3" /> {language === 'en' ? 'Upload Document' : 'दस्तावेज़ अपलोड करें'}
+           </button>
+           <button className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
+             <Mic className="h-3 w-3" /> {language === 'en' ? 'Voice Input' : 'आवाज़ इनपुट'}
+           </button>
         </div>
       </div>
     </div>

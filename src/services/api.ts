@@ -149,13 +149,20 @@ export interface DocumentStatus {
 export async function sendChatMessage(
   content: string,
   language: 'en' | 'hi' = 'en',
-  sessionId?: string
+  sessionId?: string,
+  token?: string
 ): Promise<ChatResponse> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/chat/`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({
       content,
       language,
@@ -177,13 +184,20 @@ export async function sendChatMessage(
 export async function* sendChatMessageStreaming(
   content: string,
   language: 'en' | 'hi' = 'en',
-  sessionId?: string
+  sessionId?: string,
+  token?: string
 ): AsyncGenerator<{ type: string; data: any }> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({
       content,
       language,

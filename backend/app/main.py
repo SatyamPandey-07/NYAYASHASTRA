@@ -56,9 +56,9 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="NyayGuru AI Pro",
+    title="NYAYASHASTRA",
     description="""
-    🏛️ **NyayGuru AI Pro - AI-Powered Legal Helper for India**
+    🏛️ **NYAYASHASTRA - AI-Powered Legal Helper for India**
     
     A production-grade, multi-agent RAG system for delivering precise, 
     verifiable, bilingual (English + Hindi) legal answers related to:
@@ -123,7 +123,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "service": "NyayGuru AI Pro",
+        "service": "NYAYASHASTRA",
         "version": "1.0.0",
         "components": {
             "database": "ok",
@@ -138,8 +138,9 @@ async def health_check():
 async def root():
     """Root endpoint with API information."""
     return {
-        "name": "NyayGuru AI Pro",
+        "name": "NYAYASHASTRA",
         "tagline": "AI-Powered Legal Helper for India",
+
         "version": "1.0.0",
         "description": "Multi-agent RAG system for Indian law",
         "features": [

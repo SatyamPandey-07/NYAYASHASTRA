@@ -1,5 +1,5 @@
 """
-NyayGuru AI Pro - Configuration Management
+NYAYASHASTRA - Configuration Management
 """
 
 from pydantic_settings import BaseSettings
@@ -46,9 +46,13 @@ class Settings(BaseSettings):
     allowed_extensions: str = "pdf,doc,docx"
     
     # Security
-    secret_key: str = "nyayguru-secret-key-change-in-production"
+    secret_key: str = "nyayashastra-secret-key-change-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+    
+    # Clerk Authentication
+    clerk_secret_key: str = ""
+
     
     @property
     def cors_origins_list(self) -> List[str]:

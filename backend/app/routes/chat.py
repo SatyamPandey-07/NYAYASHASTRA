@@ -3,7 +3,7 @@ NyayGuru AI Pro - Chat API Routes
 Handles chat interactions and query processing.
 """
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import StreamingResponse
 from typing import List
 import json
@@ -19,12 +19,16 @@ from app.schemas import (
     AgentPipelineStatus
 )
 from app.agents.orchestrator import get_orchestrator
+from app.services.auth_service import get_current_user
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
 @router.post("/", response_model=dict)
-async def process_chat_message(request: ChatMessageRequest):
+async def process_chat_message(
+    request: ChatMessageRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """
     Process a legal query through the multi-agent pipeline.
     Returns comprehensive legal information with citations.

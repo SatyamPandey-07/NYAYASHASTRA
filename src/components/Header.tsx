@@ -1,7 +1,10 @@
 import { motion } from 'framer-motion';
-import { Scale, Globe, Moon, Sun, Menu } from 'lucide-react';
+import { Scale, Globe, Moon, Sun, Menu, MessageSquare } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { UserButton, SignedIn } from "@clerk/clerk-react";
+import { Link, useLocation } from 'react-router-dom';
+
 
 interface HeaderProps {
   language: 'en' | 'hi';
@@ -33,36 +36,48 @@ export const Header = ({ language, onLanguageChange, onMenuClick }: HeaderProps)
             className="flex items-center gap-2"
           >
             <div className="relative">
-              <Scale className="h-8 w-8 text-primary" />
+              <img 
+                src="/national-emblem.png" 
+                alt="NYAYASHASTRA Logo" 
+                className="h-10 w-10 object-contain"
+              />
               <motion.div
-                className="absolute inset-0 bg-primary/30 blur-lg rounded-full"
+                className="absolute inset-0 bg-primary/20 blur-lg rounded-full -z-10"
                 animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.3, 0.5] }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-lg font-bold gradient-text">NyayGuru AI</h1>
-              <p className="text-xs text-muted-foreground -mt-1">
+              <h1 className="text-xl font-serif font-bold tracking-wide text-primary">NYAYASHASTRA</h1>
+              <p className="text-xs text-muted-foreground -mt-1 font-serif italic">
                 {language === 'en' ? "India's Legal Intelligence" : 'भारत की कानूनी बुद्धिमत्ता'}
               </p>
             </div>
           </motion.div>
 
-          <Badge variant="secondary" className="hidden md:inline-flex text-xs bg-secondary/20 border-secondary/30">
-            Pro
-          </Badge>
+
         </div>
 
-        {/* Center - Status */}
-        <div className="hidden md:flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-          <span className="text-xs text-muted-foreground">
-            {language === 'en' ? 'Connected to Legal Database' : 'कानूनी डेटाबेस से जुड़ा'}
-          </span>
-        </div>
+        {/* Center - Navigation */}
+        <SignedIn>
+          <nav className="hidden lg:flex items-center gap-6">
+            <Link to="/comparison" className="group flex items-center gap-2">
+              <Scale className="h-4 w-4 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
+              <span className="text-sm font-medium hover:text-primary transition-colors">
+                {language === 'en' ? 'IPC vs BNS' : 'IPC बनाम BNS'}
+              </span>
+            </Link>
+            <Link to="/" className="group flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
+              <span className="text-sm font-medium hover:text-primary transition-colors">
+                {language === 'en' ? 'Chat by Domain' : 'डोमेन द्वारा चैट'}
+              </span>
+            </Link>
+          </nav>
+        </SignedIn>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {/* Language Toggle */}
           <div className="flex items-center gap-1 glass rounded-full p-1">
             <Button
@@ -83,7 +98,12 @@ export const Header = ({ language, onLanguageChange, onMenuClick }: HeaderProps)
               हि
             </Button>
           </div>
+
+          <div className="border-l border-border pl-4">
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </div>
+
       </div>
     </motion.header>
   );

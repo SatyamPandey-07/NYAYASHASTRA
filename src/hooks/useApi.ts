@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import * as api from '../services/api';
 import type {
     ChatMessage,
@@ -28,6 +29,7 @@ export function useChat(options: UseChatOptions = {}) {
     const { language = 'en', useStreaming = true, onAgentUpdate } = options;
 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const { getToken } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
     const [activeAgent, setActiveAgent] = useState<string | null>(null);
     const [completedAgents, setCompletedAgents] = useState<string[]>([]);
@@ -57,11 +59,13 @@ export function useChat(options: UseChatOptions = {}) {
         setActiveAgent(null);
 
         try {
+            const token = await getToken() || undefined;
+
             if (useStreaming) {
                 // Use streaming API
                 let response: Partial<ChatResponse> = {};
 
-                for await (const chunk of api.sendChatMessageStreaming(content, language, sessionId || undefined)) {
+                for await (const chunk of api.sendChatMessageStreaming(content, language, sessionId || undefined, token)) {
                     switch (chunk.type) {
                         case 'start':
                             setSessionId(chunk.data.session_id);
@@ -109,7 +113,7 @@ export function useChat(options: UseChatOptions = {}) {
                     id: (Date.now() + 1).toString(),
                     role: 'assistant',
                     content: response.content || '',
-                    contentHindi: response.content_hi,
+                    contentHindi: response.contentHi,
                     citations: response.citations as Citation[],
                     statutes: response.statutes as Statute[],
                     timestamp: new Date(),
@@ -118,7 +122,7 @@ export function useChat(options: UseChatOptions = {}) {
 
             } else {
                 // Use regular API
-                const response = await api.sendChatMessage(content, language, sessionId || undefined);
+                const response = await api.sendChatMessage(content, language, sessionId || undefined, token);
 
                 setSessionId(response.sessionId);
                 setCurrentStatutes(response.statutes);

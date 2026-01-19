@@ -2,33 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/Header';
 import { ChatInterface } from '@/components/ChatInterface';
-import { AgentStatusPanel } from '@/components/AgentStatusPanel';
-import { AgentOrchestration3D } from '@/components/AgentOrchestration3D';
-import { IPCBNSComparison } from '@/components/IPCBNSComparison';
-import { EnhancedIPCBNSComparison } from '@/components/EnhancedIPCBNSComparison';
-import { CitationsPanel } from '@/components/CitationsPanel';
-import { DocumentUpload } from '@/components/DocumentUpload';
-import { RetrievedStatutesPanel } from '@/components/RetrievedStatutesPanel';
-import { CaseLawsPanel } from '@/components/CaseLawsPanel';
-import { QuickActions } from '@/components/QuickActions';
-import { WelcomeScreen } from '@/components/WelcomeScreen';
-import { LandingPage } from '@/components/LandingPage';
-import { DemoFlow } from '@/components/DemoFlow';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
+import { AuthenticatedDashboard } from '@/components/AuthenticatedDashboard';
 import { useChat } from '@/hooks/useApi';
-import {
-  BookOpen,
-  Scale,
-  Link2,
-  FileText,
-  Brain,
-  Maximize2,
-  Minimize2,
-  Gavel,
-  PlayCircle
-} from 'lucide-react';
 
 interface Message {
   id: string;
@@ -41,9 +16,8 @@ interface Message {
 }
 
 const Index = () => {
+  const [isNewChatStarted, setIsNewChatStarted] = useState(false);
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [show3DView, setShow3DView] = useState(false);
   const [useBackendAPI, setUseBackendAPI] = useState(false);
 
   // Try to use the API hook, fallback to local state if backend not available
@@ -169,6 +143,7 @@ const Index = () => {
   const currentProcessingAgents = useBackendAPI ? processingAgents : localProcessingAgents;
 
   const hasMessages = messages.length > 0;
+  const showChatView = hasMessages || isNewChatStarted;
 
   // Map API messages to component format
   const formattedMessages = messages.map(msg => ({
@@ -190,30 +165,18 @@ const Index = () => {
       <Header
         language={language}
         onLanguageChange={setLanguage}
-        onMenuClick={() => setShowSidebar(true)}
       />
 
-      {/* API Status Indicator */}
-      <div className="absolute top-20 right-4 z-50">
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs ${useBackendAPI
-          ? 'bg-accent/20 text-accent border border-accent/30'
-          : 'bg-chart-4/20 text-chart-4 border border-chart-4/30'
-          }`}>
-          <div className={`w-2 h-2 rounded-full ${useBackendAPI ? 'bg-accent' : 'bg-chart-4'} animate-pulse`} />
-          {useBackendAPI ? 'API Connected' : 'Demo Mode'}
-        </div>
-      </div>
-
       <div className="flex-1 flex overflow-hidden">
-        {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {!hasMessages ? (
-            <div className="flex-1 overflow-y-auto">
-              <WelcomeScreen language={language} onStartChat={handleStartChat} />
-              <div className="container mx-auto px-4 pb-8">
-                <QuickActions language={language} onActionClick={handleSendMessage} />
-              </div>
-            </div>
+          {!showChatView ? (
+            <AuthenticatedDashboard 
+              language={language} 
+              onStartChat={(msg) => {
+                if (msg) handleSendMessage(msg);
+                else setIsNewChatStarted(true);
+              }} 
+            />
           ) : (
             <ChatInterface
               messages={formattedMessages}
@@ -223,168 +186,6 @@ const Index = () => {
             />
           )}
         </div>
-
-        {/* Right Sidebar - Desktop */}
-        <AnimatePresence>
-          {hasMessages && (
-            <motion.aside
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 420, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="hidden lg:block border-l border-border bg-background overflow-hidden"
-            >
-              <div className="h-full overflow-y-auto p-4 space-y-4">
-                {/* 3D Visualization Toggle */}
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Brain className="h-4 w-4 text-primary" />
-                    {language === 'en' ? 'Agent Orchestration' : 'एजेंट ऑर्केस्ट्रेशन'}
-                  </h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShow3DView(!show3DView)}
-                    className="text-xs"
-                  >
-                    {show3DView ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
-                  </Button>
-                </div>
-
-                {/* 3D View or Agent Status */}
-                <AnimatePresence mode="wait">
-                  {show3DView ? (
-                    <motion.div
-                      key="3d"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 300 }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="glass-strong rounded-2xl overflow-hidden"
-                    >
-                      <AgentOrchestration3D
-                        activeAgent={currentActiveAgent}
-                        processingAgents={currentProcessingAgents}
-                      />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="list"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <AgentStatusPanel
-                        activeAgent={currentActiveAgent}
-                        completedAgents={currentCompletedAgents}
-                        processingAgents={currentProcessingAgents}
-                        language={language}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Tabs for different panels */}
-                <Tabs defaultValue="statutes" className="w-full">
-                  <TabsList className="w-full grid grid-cols-6 glass">
-                    <TabsTrigger value="statutes" className="text-xs">
-                      <BookOpen className="h-3 w-3" />
-                    </TabsTrigger>
-                    <TabsTrigger value="cases" className="text-xs">
-                      <Gavel className="h-3 w-3" />
-                    </TabsTrigger>
-                    <TabsTrigger value="comparison" className="text-xs">
-                      <Scale className="h-3 w-3" />
-                    </TabsTrigger>
-                    <TabsTrigger value="citations" className="text-xs">
-                      <Link2 className="h-3 w-3" />
-                    </TabsTrigger>
-                    <TabsTrigger value="upload" className="text-xs">
-                      <FileText className="h-3 w-3" />
-                    </TabsTrigger>
-                    <TabsTrigger value="demo" className="text-xs">
-                      <PlayCircle className="h-3 w-3" />
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="statutes" className="mt-4">
-                    <RetrievedStatutesPanel
-                      statutes={currentStatutes?.map(s => ({
-                        id: String(s.id),
-                        section: s.sectionNumber,
-                        act: s.actCode as 'IPC' | 'BNS' | 'CrPC' | 'BSA' | 'IT Act' | 'Constitution',
-                        title: s.titleEn,
-                        content: s.contentEn,
-                        relevanceScore: 0.9
-                      })) || []}
-                      language={language}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="cases" className="mt-4">
-                    <CaseLawsPanel language={language} />
-                  </TabsContent>
-
-                  <TabsContent value="comparison" className="mt-4">
-                    <EnhancedIPCBNSComparison language={language} />
-                  </TabsContent>
-
-                  <TabsContent value="citations" className="mt-4">
-                    <CitationsPanel
-                      citations={currentCitations?.map(c => ({
-                        id: c.id,
-                        title: c.title,
-                        source: c.source as any,
-                        url: c.url,
-                        excerpt: c.excerpt,
-                        year: c.year,
-                        court: c.court
-                      })) || []}
-                      language={language}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="upload" className="mt-4">
-                    <DocumentUpload language={language} />
-                  </TabsContent>
-
-                  <TabsContent value="demo" className="mt-4">
-                    <DemoFlow language={language} />
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
-
-        {/* Mobile Sidebar */}
-        <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
-          <SheetContent side="right" className="w-[90vw] sm:w-[400px] p-0">
-            <div className="h-full overflow-y-auto p-4 space-y-4">
-              <AgentStatusPanel
-                activeAgent={currentActiveAgent}
-                completedAgents={currentCompletedAgents}
-                processingAgents={currentProcessingAgents}
-                language={language}
-              />
-              <RetrievedStatutesPanel statutes={[]} language={language} />
-              <IPCBNSComparison comparisons={[]} language={language} />
-              <CitationsPanel citations={[]} language={language} />
-              <DocumentUpload language={language} />
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        {/* Mobile sidebar toggle */}
-        {hasMessages && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="fixed bottom-20 right-4 lg:hidden z-40 h-12 w-12 rounded-full glow-primary"
-            onClick={() => setShowSidebar(true)}
-          >
-            <Brain className="h-5 w-5" />
-          </Button>
-        )}
       </div>
     </div>
   );
