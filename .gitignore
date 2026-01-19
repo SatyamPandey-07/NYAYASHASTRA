@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+backend/venv/
+venv/
+.python-version
+
+# Environment Variables
+.env
+backend/.env
+.env.local
+.env.*.local
+
+# Build Outputs
+dist/
+build/
+backend/build/
+backend/dist/
+*.spec
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Vector DB
+chroma_db/
+backend/chroma_db/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Lovable/GPT Generated
+.gpt-pilot/
