@@ -6,16 +6,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import * as api from '../services/api';
-import type {
-    ChatMessage,
-    ChatResponse,
-    AgentStep,
-    Statute,
-    Citation,
-    CaseLaw,
-    IPCBNSMapping,
-    DocumentStatus
-} from '../services/api';
+import { ChatMessage, ChatResponse, AgentStep, Statute, Citation, CaseLaw, IPCBNSMapping, DocumentStatus } from '../services/api';
+import { useChatState } from './useChatContext';
 
 // ============== useChat Hook ==============
 
@@ -28,20 +20,24 @@ export interface UseChatOptions {
 export function useChat(options: UseChatOptions = {}) {
     const { language = 'en', useStreaming = true, onAgentUpdate } = options;
 
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const {
+        messages, setMessages,
+        sessionId, setSessionId,
+        currentStatutes, setCurrentStatutes,
+        currentCitations, setCurrentCitations,
+        currentCaseLaws, setCurrentCaseLaws,
+        currentMappings, setCurrentMappings,
+        clearChat: clearMessages
+    } = useChatState();
+
     const { getToken } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
     const [activeAgent, setActiveAgent] = useState<string | null>(null);
     const [completedAgents, setCompletedAgents] = useState<string[]>([]);
     const [processingAgents, setProcessingAgents] = useState<string[]>([]);
-    const [currentStatutes, setCurrentStatutes] = useState<Statute[]>([]);
-    const [currentCitations, setCurrentCitations] = useState<Citation[]>([]);
-    const [currentCaseLaws, setCurrentCaseLaws] = useState<CaseLaw[]>([]);
-    const [currentMappings, setCurrentMappings] = useState<IPCBNSMapping[]>([]);
-    const [sessionId, setSessionId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const sendMessage = useCallback(async (content: string) => {
+    const sendMessage = useCallback(async (content: string, domain?: string) => {
         if (!content.trim() || isProcessing) return;
 
         // Add user message
@@ -65,7 +61,7 @@ export function useChat(options: UseChatOptions = {}) {
                 // Use streaming API
                 let response: Partial<ChatResponse> = {};
 
-                for await (const chunk of api.sendChatMessageStreaming(content, language, sessionId || undefined, token)) {
+                for await (const chunk of api.sendChatMessageStreaming(content, language, sessionId || undefined, token, domain)) {
                     switch (chunk.type) {
                         case 'start':
                             setSessionId(chunk.data.session_id);
@@ -156,14 +152,21 @@ export function useChat(options: UseChatOptions = {}) {
         }
     }, [language, useStreaming, sessionId, isProcessing, onAgentUpdate]);
 
-    const clearMessages = useCallback(() => {
-        setMessages([]);
-        setSessionId(null);
-        setCurrentStatutes([]);
-        setCurrentCitations([]);
-        setCurrentCaseLaws([]);
-        setCurrentMappings([]);
-    }, []);
+    const loadSession = useCallback(async (sId: string) => {
+        setIsProcessing(true);
+        setError(null);
+        try {
+            const token = await getToken() || undefined;
+            const data = await api.getSessionMessages(sId, token);
+            setMessages(data.messages);
+            setSessionId(data.sessionId);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load session';
+            setError(errorMessage);
+        } finally {
+            setIsProcessing(false);
+        }
+    }, [getToken, setMessages, setSessionId]);
 
     return {
         messages,
@@ -179,6 +182,7 @@ export function useChat(options: UseChatOptions = {}) {
         error,
         sendMessage,
         clearMessages,
+        loadSession,
     };
 }
 
@@ -355,9 +359,77 @@ export function useIPCBNSComparison() {
     };
 }
 
+// ============== useChatHistory Hook ==============
+
+export function useChatHistory() {
+    const [sessions, setSessions] = useState<api.ChatSession[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const { getToken } = useAuth();
+
+    const fetchHistory = useCallback(async (limit: number = 20) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const token = await getToken() || undefined;
+            const data = await api.getChatHistory(limit, token);
+            setSessions(data.sessions);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to fetch history';
+            setError(errorMessage);
+            // Return empty array if backend not available
+            setSessions([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [getToken]);
+
+    const loadSession = useCallback(async (sessionId: string) => {
+        try {
+            const token = await getToken() || undefined;
+            const data = await api.getSessionMessages(sessionId, token);
+            return data;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load session';
+            setError(errorMessage);
+            throw err;
+        }
+    }, [getToken]);
+
+    const deleteSession = useCallback(async (sessionId: string) => {
+        try {
+            const token = await getToken() || undefined;
+            await api.deleteSession(sessionId, token);
+            // Remove from local state
+            setSessions(prev => prev.filter(s => s.id !== sessionId));
+            return true;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to delete session';
+            setError(errorMessage);
+            return false;
+        }
+    }, [getToken]);
+
+    // Fetch history on mount
+    useEffect(() => {
+        fetchHistory();
+    }, []);
+
+    return {
+        sessions,
+        loading,
+        error,
+        fetchHistory,
+        loadSession,
+        deleteSession,
+    };
+}
+
 export default {
     useChat,
     useDocumentUpload,
     useStatutes,
     useIPCBNSComparison,
+    useChatHistory,
 };

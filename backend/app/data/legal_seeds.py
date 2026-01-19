@@ -314,7 +314,7 @@ LANDMARK_CASES = [
         "cited_sections": []
     },
     {
-        "case_number": "Writ Petition (Criminal) No. 76/2016",
+        "case_number": "Criminal Appeal No. 76/2016",
         "case_name": "Navtej Singh Johar v. Union of India",
         "case_name_hi": "नवतेज सिंह जौहर बनाम भारत संघ",
         "court": "supreme_court",
@@ -332,6 +332,69 @@ LANDMARK_CASES = [
             "Sexual orientation is part of right to privacy and dignity"
         ],
         "domain": "criminal",
+        "cited_sections": []
+    },
+    {
+        "case_number": "Writ Petition (Civil) No. 135/1970",
+        "case_name": "Kesavananda Bharati v. State of Kerala",
+        "case_name_hi": "केशवानंद भारती बनाम केरल राज्य",
+        "court": "supreme_court",
+        "court_name": "Supreme Court of India",
+        "judgment_date": "1973-04-24",
+        "reporting_year": 1973,
+        "summary_en": "The most significant judgment in Indian constitutional history which established the 'Basic Structure Doctrine'. It held that while Parliament has the power to amend the Constitution, it cannot alter its basic structure.",
+        "summary_hi": "भारतीय संवैधानिक इतिहास का सबसे महत्वपूर्ण निर्णय जिसने 'बुनियादी ढांचा सिद्धांत' स्थापित किया।",
+        "is_landmark": True,
+        "citation_string": "AIR 1973 SC 1461",
+        "source_url": "https://indiankanoon.org/doc/257876",
+        "key_holdings": [
+            "Basic Structure Doctrine established",
+            "Parliamentary power to amend is limited",
+            "Judicial review is a part of the basic structure"
+        ],
+        "domain": "constitutional",
+        "cited_sections": []
+    },
+    {
+        "case_number": "Writ Petition (Civil) No. 231/1977",
+        "case_name": "Maneka Gandhi v. Union of India",
+        "case_name_hi": "मेनका गांधी बनाम भारत संघ",
+        "court": "supreme_court",
+        "court_name": "Supreme Court of India",
+        "judgment_date": "1978-01-25",
+        "reporting_year": 1978,
+        "summary_en": "Expanded the scope of Article 21 (Right to Life and Personal Liberty) to include the right to travel abroad. Established the test of 'reasonableness' for any law depriving a person of liberty.",
+        "summary_hi": "अनुच्छेद 21 (जीवन और व्यक्तिगत स्वतंत्रता का अधिकार) के दायरे का विस्तार करने वाला ऐतिहासिक निर्णय।",
+        "is_landmark": True,
+        "citation_string": "AIR 1978 SC 597",
+        "source_url": "https://indiankanoon.org/doc/1766147",
+        "key_holdings": [
+            "Procedure established by law must be just, fair and reasonable",
+            "Fundamental Rights are not mutually exclusive",
+            "Right to travel abroad is part of personal liberty"
+        ],
+        "domain": "constitutional",
+        "cited_sections": []
+    },
+    {
+        "case_number": "Writ Petition (Civil) No. 118/2016",
+        "case_name": "Shayara Bano v. Union of India",
+        "case_name_hi": "शायरा बानो बनाम भारत संघ",
+        "court": "supreme_court",
+        "court_name": "Supreme Court of India",
+        "judgment_date": "2017-08-22",
+        "reporting_year": 2017,
+        "summary_en": "The Supreme Court declared the practice of 'Triple Talaq' (Talaq-e-Biddat) as unconstitutional, holding it to be arbitrary and violative of fundamental rights of Muslim women.",
+        "summary_hi": "'तीन तलाक' की प्रथा को असंवैधानिक घोषित किया - इसे मनमाना और मुस्लिम महिलाओं के मौलिक अधिकारों का उल्लंघन माना।",
+        "is_landmark": True,
+        "citation_string": "(2017) 9 SCC 1",
+        "source_url": "https://indiankanoon.org/doc/11570122",
+        "key_holdings": [
+            "Triple Talaq is unconstitutional",
+            "Violates Article 14 (Right to Equality)",
+            "Not an essential religious practice"
+        ],
+        "domain": "family",
         "cited_sections": []
     }
 ]

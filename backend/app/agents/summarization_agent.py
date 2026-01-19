@@ -29,6 +29,14 @@ class SummarizationAgent(BaseAgent):
     async def process(self, context: AgentContext) -> AgentContext:
         """Process and summarize document if available."""
         
+        # Ensure LLM service is available
+        if not self.llm_service:
+            try:
+                from app.services.llm_service import get_llm_service
+                self.llm_service = await get_llm_service()
+            except Exception as e:
+                logger.error(f"Failed to initialize LLM service in SummarizationAgent: {e}")
+        
         # If there's a document to summarize
         if context.document_summary:
             # Already processed, enhance if possible

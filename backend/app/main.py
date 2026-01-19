@@ -121,6 +121,9 @@ app.include_router(cases.router)
 @app.get("/health", tags=["health"])
 async def health_check():
     """Health check endpoint."""
+    from app.services.llm_service import get_llm_service
+    llm_service = await get_llm_service()
+    
     return {
         "status": "healthy",
         "service": "NYAYASHASTRA",
@@ -128,7 +131,7 @@ async def health_check():
         "components": {
             "database": "ok",
             "vector_store": "ok",
-            "llm": "mock"  # Update when LLM is connected
+            "llm": llm_service.get_status()
         }
     }
 
@@ -189,3 +192,5 @@ if __name__ == "__main__":
         port=settings.api_port,
         reload=settings.api_debug
     )
+
+# Reload: 2026-01-20 03:42:23.842445

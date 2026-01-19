@@ -19,6 +19,7 @@ from app.schemas import (
     IPCBNSComparisonItem,
     LegalDomain
 )
+from sqlalchemy.orm import joinedload, aliased
 
 router = APIRouter(prefix="/api/statutes", tags=["statutes"])
 
@@ -162,17 +163,23 @@ async def get_ipc_bns_comparison(
     db: Session = Depends(get_db)
 ):
     """Get IPC to BNS section comparisons from database."""
-    query = db.query(IPCBNSMapping)
+    query = db.query(IPCBNSMapping).options(
+        joinedload(IPCBNSMapping.ipc_section),
+        joinedload(IPCBNSMapping.bns_section)
+    )
     
+    # Use aliases if we need to join the same table twice
     if ipc_section:
+        statute_ipc = aliased(Statute)
         query = query.join(
-            Statute, IPCBNSMapping.ipc_section_id == Statute.id
-        ).filter(Statute.section_number.ilike(ipc_section))
+            statute_ipc, IPCBNSMapping.ipc_section_id == statute_ipc.id
+        ).filter(statute_ipc.section_number.ilike(f"%{ipc_section}%"))
     
     if bns_section:
+        statute_bns = aliased(Statute)
         query = query.join(
-            Statute, IPCBNSMapping.bns_section_id == Statute.id
-        ).filter(Statute.section_number.ilike(bns_section))
+            statute_bns, IPCBNSMapping.bns_section_id == statute_bns.id
+        ).filter(statute_bns.section_number.ilike(f"%{bns_section}%"))
     
     mappings = query.all()
     
@@ -183,8 +190,13 @@ async def get_ipc_bns_comparison(
         for m in mappings:
             ipc = m.ipc_section
             bns = m.bns_section
+            if not ipc or not bns:
+                continue
+                
             if (query_lower in (ipc.title_en or "").lower() or
-                query_lower in (bns.title_en or "").lower()):
+                query_lower in (bns.title_en or "").lower() or
+                query_lower in (ipc.section_number or "").lower() or
+                query_lower in (bns.section_number or "").lower()):
                 filtered_mappings.append(m)
         mappings = filtered_mappings
     

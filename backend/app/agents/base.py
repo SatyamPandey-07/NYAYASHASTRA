@@ -19,11 +19,12 @@ logger = logging.getLogger(__name__)
 class AgentContext:
     """Shared context passed between agents."""
     
-    def __init__(self, query: str, language: str = "en", session_id: Optional[str] = None):
+    def __init__(self, query: str, language: str = "en", session_id: Optional[str] = None, specified_domain: Optional[str] = None):
         self.query = query
         self.original_query = query
         self.language = language
         self.session_id = session_id
+        self.specified_domain = specified_domain
         
         # Detected information
         self.detected_language: Optional[str] = None

@@ -1,22 +1,82 @@
 import { useUser } from '@clerk/clerk-react';
 import { motion } from 'framer-motion';
-import { Search, Plus, MessageSquare, History, Clock, BookOpen } from 'lucide-react';
+import { Search, Plus, MessageSquare, History, Clock, BookOpen, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { useEffect, useState } from 'react';
+import { warmUpDatabase } from '@/services/api';
+import { useChatHistory } from '@/hooks/useApi';
 
 interface AuthenticatedDashboardProps {
   language: 'en' | 'hi';
   onStartChat: (message?: string) => void;
+  onLoadSession?: (sessionId: string) => void;
 }
 
-export const AuthenticatedDashboard = ({ language, onStartChat }: AuthenticatedDashboardProps) => {
-  const { user } = useUser();
+interface DashboardStats {
+  savedStatutes: number;
+  casesAnalyzed: number;
+  activeSessions: number;
+}
 
-  const recentChats = [
-    { id: '1', title: 'IPC 302 Analysis', date: '2 hours ago' },
-    { id: '2', title: 'Property Dispute Query', date: 'Yesterday' },
-    { id: '3', title: 'BNS Section 63 Review', date: 'Jan 18' },
-  ];
+export const AuthenticatedDashboard = ({ language, onStartChat, onLoadSession }: AuthenticatedDashboardProps) => {
+  const { user } = useUser();
+  const { sessions: recentChats, loading: historyLoading } = useChatHistory();
+  const [stats, setStats] = useState<DashboardStats>({
+    savedStatutes: 0,
+    casesAnalyzed: 0,
+    activeSessions: 0
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Warm up database and fetch stats on component mount
+  useEffect(() => {
+    warmUpDatabase();
+    fetchStats();
+  }, []);
+
+  // Update active sessions count when chat history changes
+  useEffect(() => {
+    setStats(prev => ({
+      ...prev,
+      activeSessions: recentChats.length
+    }));
+  }, [recentChats]);
+
+  const fetchStats = async () => {
+    setStatsLoading(true);
+    try {
+      // Fetch statute count from backend
+      const statuteRes = await fetch('http://localhost:8000/api/statutes/?limit=1');
+      if (statuteRes.ok) {
+        // Get total from header or estimate
+        const data = await statuteRes.json();
+        // Fetch all to get count (or add a count endpoint)
+        const allStatutesRes = await fetch('http://localhost:8000/api/statutes/');
+        if (allStatutesRes.ok) {
+          const allData = await allStatutesRes.json();
+          setStats(prev => ({
+            ...prev,
+            savedStatutes: allData.length || 0
+          }));
+        }
+      }
+
+      // Fetch case law count
+      const caseRes = await fetch('http://localhost:8000/api/cases/');
+      if (caseRes.ok) {
+        const caseData = await caseRes.json();
+        setStats(prev => ({
+          ...prev,
+          casesAnalyzed: caseData.length || 0
+        }));
+      }
+    } catch (error) {
+      console.log('Stats fetch error (backend may be starting):', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -35,6 +95,9 @@ export const AuthenticatedDashboard = ({ language, onStartChat }: AuthenticatedD
     visible: { opacity: 1, scale: 1 }
   };
 
+  // Get display chats (limit to 3 for the dashboard)
+  const displayChats = recentChats.slice(0, 3);
+
   return (
     <div className="flex-1 overflow-y-auto bg-[#faf7f2] dark:bg-[#0f1115]">
       <div className="container mx-auto px-4 py-12 max-w-6xl">
@@ -45,10 +108,10 @@ export const AuthenticatedDashboard = ({ language, onStartChat }: AuthenticatedD
             animate={{ opacity: 1, x: 0 }}
             className="space-y-2"
           >
-            <h2 className="text-4xl md:text-6xl font-serif font-bold text-foreground tracking-tight">
+            <h2 className="text-xl md:text-4xl font-serif font-medium text-muted-foreground tracking-wide">
               {language === 'en' ? 'Hello,' : 'नमस्ते,'}
             </h2>
-            <h3 className="text-3xl md:text-5xl font-serif font-medium text-primary tracking-tight">
+            <h3 className="text-6xl md:text-6xl font-serif font-black text-primary tracking-tighter -mt-2">
               {user?.firstName || (language === 'en' ? 'Advocate' : 'अधिवक्ता')}
             </h3>
           </motion.div>
@@ -94,46 +157,95 @@ export const AuthenticatedDashboard = ({ language, onStartChat }: AuthenticatedD
 
               {/* Chat Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-                {recentChats.map((chat, idx) => (
+                {historyLoading ? (
+                  // Loading state
+                  [...Array(3)].map((_, idx) => (
+                    <motion.div
+                      key={idx}
+                      variants={itemVariants}
+                      className="relative"
+                    >
+                      <div className="relative bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 h-64 flex flex-col animate-pulse">
+                        <div className="absolute left-0 top-0 bottom-0 w-8 bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-around py-4 border-r border-slate-200 dark:border-slate-700">
+                          {[...Array(8)].map((_, i) => (
+                            <div key={i} className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 shadow-inner" />
+                          ))}
+                        </div>
+                        <div className="ml-8 p-6 flex-1 flex flex-col">
+                          <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24 mb-4"></div>
+                          <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
+                          <div className="mt-auto space-y-3">
+                            <div className="h-px bg-slate-100 dark:bg-slate-800 w-full" />
+                            <div className="h-px bg-slate-100 dark:bg-slate-800 w-3/4" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : displayChats.length === 0 ? (
+                  // Empty state
                   <motion.div
-                    key={chat.id}
                     variants={itemVariants}
-                    whileHover={{ y: -8 }}
-                    className="relative group cursor-pointer"
-                    onClick={() => onStartChat(`Tell me about ${chat.title}`)}
+                    className="col-span-3 text-center py-12"
                   >
-                    {/* Notebook Style Card */}
-                    <div className="relative bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 h-64 flex flex-col">
-                      {/* Spiral - The "Sketch" logic */}
-                      <div className="absolute left-0 top-0 bottom-0 w-8 bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-around py-4 border-r border-slate-200 dark:border-slate-700">
-                        {[...Array(8)].map((_, i) => (
-                          <div key={i} className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 shadow-inner" />
-                        ))}
-                      </div>
-
-                      {/* Content Area */}
-                      <div className="ml-8 p-6 flex-1 flex flex-col">
-                        <div className="flex items-center gap-2 mb-4">
-                          <MessageSquare className="h-4 w-4 text-primary" />
-                          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{chat.date}</span>
-                        </div>
-                        <h4 className="text-xl font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
-                          {chat.title}
-                        </h4>
-                        
-                        {/* Placeholder Lines */}
-                        <div className="mt-auto space-y-3">
-                          <div className="h-px bg-slate-100 dark:bg-slate-800 w-full" />
-                          <div className="h-px bg-slate-100 dark:bg-slate-800 w-3/4" />
-                          <div className="h-px bg-slate-100 dark:bg-slate-800 w-full" />
-                        </div>
-                      </div>
-
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors pointer-events-none" />
-                    </div>
+                    <MessageSquare className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                    <h4 className="text-xl font-serif font-bold text-muted-foreground mb-2">
+                      {language === 'en' ? 'No conversations yet' : 'अभी तक कोई बातचीत नहीं'}
+                    </h4>
+                    <p className="text-muted-foreground/70">
+                      {language === 'en' 
+                        ? 'Start a new chat to see your history here' 
+                        : 'अपना इतिहास यहाँ देखने के लिए नई चैट शुरू करें'}
+                    </p>
                   </motion.div>
-                ))}
+                ) : (
+                  // Real chat history
+                  displayChats.map((chat) => (
+                    <motion.div
+                      key={chat.id}
+                      variants={itemVariants}
+                      whileHover={{ y: -8 }}
+                      className="relative group cursor-pointer"
+                      onClick={() => onLoadSession?.(chat.id)}
+                    >
+                      {/* Notebook Style Card */}
+                      <div className="relative bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 h-64 flex flex-col">
+                        {/* Spiral - The "Sketch" logic */}
+                        <div className="absolute left-0 top-0 bottom-0 w-8 bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-around py-4 border-r border-slate-200 dark:border-slate-700">
+                          {[...Array(8)].map((_, i) => (
+                            <div key={i} className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 shadow-inner" />
+                          ))}
+                        </div>
+
+                        {/* Content Area */}
+                        <div className="ml-8 p-6 flex-1 flex flex-col">
+                          <div className="flex items-center gap-2 mb-4">
+                            <MessageSquare className="h-4 w-4 text-primary" />
+                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{chat.date}</span>
+                            {chat.messageCount && (
+                              <span className="text-[10px] text-muted-foreground/60 ml-auto">
+                                {chat.messageCount} {language === 'en' ? 'msgs' : 'संदेश'}
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="text-xl font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight line-clamp-3">
+                            {chat.title}
+                          </h4>
+                          
+                          {/* Placeholder Lines */}
+                          <div className="mt-auto space-y-3">
+                            <div className="h-px bg-slate-100 dark:bg-slate-800 w-full" />
+                            <div className="h-px bg-slate-100 dark:bg-slate-800 w-3/4" />
+                            <div className="h-px bg-slate-100 dark:bg-slate-800 w-full" />
+                          </div>
+                        </div>
+
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors pointer-events-none" />
+                      </div>
+                    </motion.div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -141,9 +253,21 @@ export const AuthenticatedDashboard = ({ language, onStartChat }: AuthenticatedD
           {/* Quick Stats / Info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { label: 'Saved Statutes', value: '48+', icon: BookOpen },
-              { label: 'Cases Analyzed', value: '12', icon: Clock },
-              { label: 'Active Sessions', value: '3', icon: History },
+              { 
+                label: language === 'en' ? 'Saved Statutes' : 'सहेजी गई धाराएं', 
+                value: statsLoading ? '...' : `${stats.savedStatutes}+`, 
+                icon: BookOpen 
+              },
+              { 
+                label: language === 'en' ? 'Cases in Database' : 'डेटाबेस में केस', 
+                value: statsLoading ? '...' : stats.casesAnalyzed.toString(), 
+                icon: Clock 
+              },
+              { 
+                label: language === 'en' ? 'Your Chats' : 'आपकी चैट', 
+                value: historyLoading ? '...' : stats.activeSessions.toString(), 
+                icon: History 
+              },
             ].map((stat, i) => (
               <motion.div 
                 key={i}
@@ -153,7 +277,11 @@ export const AuthenticatedDashboard = ({ language, onStartChat }: AuthenticatedD
                 className="glass rounded-2xl p-6 flex items-center gap-4 border border-white/10"
               >
                 <div className="p-3 bg-primary/10 rounded-xl">
-                  <stat.icon className="h-6 w-6 text-primary" />
+                  {statsLoading || historyLoading ? (
+                    <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                  ) : (
+                    <stat.icon className="h-6 w-6 text-primary" />
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{stat.label}</p>

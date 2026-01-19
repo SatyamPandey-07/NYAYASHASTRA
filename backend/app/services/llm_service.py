@@ -45,6 +45,12 @@ class LLMService:
         
         self._initialized = True
     
+    def get_status(self) -> str:
+        """Get current LLM provider status."""
+        if not self._initialized:
+            return "not_initialized"
+        return self.provider or "none"
+    
     async def generate(self, prompt: str, max_tokens: int = 2000, 
                       temperature: float = 0.7) -> str:
         """Generate text from prompt using Groq or OpenAI."""

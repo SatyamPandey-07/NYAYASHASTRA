@@ -150,7 +150,8 @@ export async function sendChatMessage(
   content: string,
   language: 'en' | 'hi' = 'en',
   sessionId?: string,
-  token?: string
+  token?: string,
+  domain?: string
 ): Promise<ChatResponse> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -167,6 +168,7 @@ export async function sendChatMessage(
       content,
       language,
       session_id: sessionId,
+      domain,
     }),
   });
 
@@ -185,7 +187,8 @@ export async function* sendChatMessageStreaming(
   content: string,
   language: 'en' | 'hi' = 'en',
   sessionId?: string,
-  token?: string
+  token?: string,
+  domain?: string
 ): AsyncGenerator<{ type: string; data: any }> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -202,6 +205,7 @@ export async function* sendChatMessageStreaming(
       content,
       language,
       session_id: sessionId,
+      domain,
     }),
   });
 
@@ -387,6 +391,129 @@ export async function getAgents(): Promise<AgentInfo[]> {
 export async function healthCheck(): Promise<{ status: string; version: string }> {
   const response = await fetch(`${API_BASE_URL}/health`);
   if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+  return response.json();
+}
+
+/**
+ * Warm up the database by making a simple health check
+ * This helps reduce cold start times for Neon PostgreSQL
+ */
+export async function warmUpDatabase(): Promise<void> {
+  try {
+    await fetch(`${API_BASE_URL}/health`, { method: 'GET' });
+    // Also ping the statutes endpoint to warm up the DB connection
+    await fetch(`${API_BASE_URL}/api/statutes/?limit=1`, { method: 'GET' });
+  } catch (e) {
+    // Silently fail - this is just a warmup
+    console.log('Database warmup in progress...');
+  }
+}
+
+// ============== Chat History API ==============
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  date: string;
+  messageCount: number;
+  language?: string;
+}
+
+export interface ChatHistoryResponse {
+  sessions: ChatSession[];
+}
+
+/**
+ * Get chat history for the current user
+ */
+export async function getChatHistory(
+  limit: number = 20,
+  token?: string
+): Promise<ChatHistoryResponse> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/chat/history?limit=${limit}`, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get messages for a specific chat session
+ */
+export async function getSessionMessages(
+  sessionId: string,
+  token?: string
+): Promise<{ messages: ChatMessage[]; sessionId: string }> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/chat/history/${sessionId}`, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  
+  // Transform messages
+  return {
+    sessionId: data.sessionId,
+    messages: (data.messages || []).map((msg: any) => ({
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      contentHindi: msg.contentHindi,
+      citations: msg.citations || [],
+      timestamp: new Date(msg.timestamp),
+    })),
+  };
+}
+
+/**
+ * Delete a chat session
+ */
+export async function deleteSession(
+  sessionId: string,
+  token?: string
+): Promise<{ success: boolean; message: string }> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/chat/history/${sessionId}`, {
+    method: 'DELETE',
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.statusText}`);
+  }
+
   return response.json();
 }
 

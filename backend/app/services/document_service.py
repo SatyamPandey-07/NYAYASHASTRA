@@ -10,22 +10,27 @@ from datetime import datetime
 import logging
 import asyncio
 
+logger = logging.getLogger(__name__)
+
 try:
     import pdfplumber
     PDF_AVAILABLE = True
-except ImportError:
+    logger.info("pdfplumber successfully loaded")
+except ImportError as e:
     PDF_AVAILABLE = False
+    logger.warning(f"pdfplumber NOT available: {e}")
 
 try:
     from PyPDF2 import PdfReader
     PYPDF2_AVAILABLE = True
-except ImportError:
+    logger.info("PyPDF2 successfully loaded")
+except ImportError as e:
     PYPDF2_AVAILABLE = False
+    logger.warning(f"PyPDF2 NOT available: {e}")
 
 from app.config import settings
 from app.agents.summarization_agent import SummarizationAgent
 
-logger = logging.getLogger(__name__)
 
 
 class DocumentService:
@@ -147,9 +152,26 @@ class DocumentService:
         """Extract text from PDF file."""
         text = ""
         
+        # Late-bind check for libraries in case of reload issues
+        global PDF_AVAILABLE, PYPDF2_AVAILABLE
+        if not PDF_AVAILABLE:
+            try:
+                import pdfplumber
+                PDF_AVAILABLE = True
+            except ImportError:
+                pass
+        
+        if not PYPDF2_AVAILABLE:
+            try:
+                from PyPDF2 import PdfReader
+                PYPDF2_AVAILABLE = True
+            except ImportError:
+                pass
+        
         try:
             if PDF_AVAILABLE:
                 # Use pdfplumber for better extraction
+                import pdfplumber
                 with pdfplumber.open(file_path) as pdf:
                     for page in pdf.pages:
                         page_text = page.extract_text()
@@ -158,6 +180,7 @@ class DocumentService:
             
             elif PYPDF2_AVAILABLE:
                 # Fallback to PyPDF2
+                from PyPDF2 import PdfReader
                 reader = PdfReader(file_path)
                 for page in reader.pages:
                     page_text = page.extract_text()
@@ -165,7 +188,7 @@ class DocumentService:
                         text += page_text + "\n\n"
             
             else:
-                raise ImportError("No PDF library available")
+                raise ImportError("No PDF library available. Please run: pip install pdfplumber pypdf2")
             
         except Exception as e:
             logger.error(f"Error extracting text: {e}")

@@ -54,9 +54,36 @@ class AgentOrchestrator:
             AgentType.RESPONSE
         ]
     
+    async def _ensure_services(self):
+        """Ensure all services are initialized and shared with agents."""
+        if not self.llm_service:
+            try:
+                from app.services.llm_service import get_llm_service
+                self.llm_service = await get_llm_service()
+                # Update agents that need LLM
+                for agent in self.agents:
+                    if hasattr(agent, 'llm_service') and not agent.llm_service:
+                        agent.llm_service = self.llm_service
+            except Exception as e:
+                logger.error(f"Failed to initialize LLM service in orchestrator: {e}")
+
+        if not self.vector_store:
+            try:
+                from app.services.vector_store import get_vector_store
+                self.vector_store = await get_vector_store()
+                # Update agents that need vector store
+                for agent in self.agents:
+                    if hasattr(agent, 'vector_store') and not agent.vector_store:
+                        agent.vector_store = self.vector_store
+            except Exception as e:
+                logger.warning(f"Vector store not available in orchestrator: {e}")
+
     async def process_query(self, query: str, language: str = "en", 
-                           session_id: Optional[str] = None) -> Dict[str, Any]:
+                           session_id: Optional[str] = None,
+                           domain: Optional[str] = None) -> Dict[str, Any]:
         """Process a legal query through the full agent pipeline."""
+        
+        await self._ensure_services()
         
         if not session_id:
             session_id = str(uuid.uuid4())
@@ -65,7 +92,8 @@ class AgentOrchestrator:
         context = AgentContext(
             query=query,
             language=language,
-            session_id=session_id
+            session_id=session_id,
+            specified_domain=domain
         )
         
         start_time = datetime.now()
@@ -87,8 +115,11 @@ class AgentOrchestrator:
         return response
     
     async def process_query_streaming(self, query: str, language: str = "en",
-                                      session_id: Optional[str] = None) -> AsyncGenerator[ChatStreamChunk, None]:
+                                      session_id: Optional[str] = None,
+                                      domain: Optional[str] = None) -> AsyncGenerator[ChatStreamChunk, None]:
         """Process query with streaming updates for real-time UI."""
+        
+        await self._ensure_services()
         
         if not session_id:
             session_id = str(uuid.uuid4())
@@ -96,7 +127,8 @@ class AgentOrchestrator:
         context = AgentContext(
             query=query,
             language=language,
-            session_id=session_id
+            session_id=session_id,
+            specified_domain=domain
         )
         
         # Yield initial status

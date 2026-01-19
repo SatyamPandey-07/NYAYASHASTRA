@@ -138,6 +138,9 @@ export const EnhancedIPCBNSComparison = ({
 }: EnhancedIPCBNSComparisonProps) => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [showHighlights, setShowHighlights] = useState(true);
+    
+    // Use passed comparisons
+    const displayComparisons = comparisons;
 
     const getChangeIcon = (type: string) => {
         switch (type) {
@@ -194,7 +197,7 @@ export const EnhancedIPCBNSComparison = ({
             {/* Comparisons List */}
             <ScrollArea className="h-[400px]">
                 <div className="space-y-3 pr-2">
-                    {comparisons.map((item) => {
+                    {displayComparisons.map((item) => {
                         const isExpanded = expandedId === item.id;
                         const { oldHighlighted, newHighlighted } = highlightDifferences(
                             item.ipcContent,
@@ -356,7 +359,7 @@ export const EnhancedIPCBNSComparison = ({
             </ScrollArea>
 
             {/* No data state */}
-            {comparisons.length === 0 && (
+            {displayComparisons.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                     <Scale className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">

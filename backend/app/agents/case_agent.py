@@ -34,6 +34,14 @@ class CaseLawAgent(BaseAgent):
     async def process(self, context: AgentContext) -> AgentContext:
         """Retrieve relevant case laws based on context from database."""
         
+        # Ensure vector store is available
+        if not self.vector_store:
+            try:
+                from app.services.vector_store import get_vector_store
+                self.vector_store = await get_vector_store()
+            except Exception as e:
+                logger.warning(f"Vector store not available in CaseLawAgent: {e}")
+        
         case_laws = []
         
         # 1. Get cases related to statutes found

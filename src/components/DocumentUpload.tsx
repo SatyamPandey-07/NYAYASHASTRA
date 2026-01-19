@@ -11,6 +11,7 @@ interface UploadedDocument {
   status: 'uploading' | 'processing' | 'completed' | 'error';
   progress: number;
   summary?: DocumentSummary;
+  error?: string;
 }
 
 interface DocumentSummary {
@@ -101,47 +102,56 @@ export const DocumentUpload = ({ language, onDocumentProcessed }: DocumentUpload
       
       // Poll for status
       const pollStatus = async () => {
-        const statusResponse = await fetch(`http://localhost:8000/api/documents/status/${serverDocId}`);
-        if (!statusResponse.ok) {
-          throw new Error('Status check failed');
-        }
-        
-        const statusData = await statusResponse.json();
-        
-        if (statusData.status === 'completed' && statusData.summary) {
-          const summary: DocumentSummary = {
-            keyArguments: statusData.summary.key_arguments || [],
-            verdict: statusData.summary.verdict || 'Processing completed',
-            citedSections: (statusData.summary.cited_sections || []).map((s: any) => ({
-              act: s.act || 'IPC',
-              section: s.section || ''
-            })),
-            parties: statusData.summary.parties,
-            courtName: statusData.summary.court_name,
-            date: statusData.summary.date,
-          };
+        try {
+          const statusResponse = await fetch(`http://localhost:8000/api/documents/status/${serverDocId}`);
+          if (!statusResponse.ok) {
+            throw new Error('Status check failed');
+          }
           
+          const statusData = await statusResponse.json();
+          
+          if (statusData.status === 'completed' && statusData.summary) {
+            const summary: DocumentSummary = {
+              keyArguments: statusData.summary.key_arguments || [],
+              verdict: statusData.summary.verdict || 'Processing completed',
+              citedSections: (statusData.summary.cited_sections || []).map((s: any) => ({
+                act: s.act || 'IPC',
+                section: s.section || ''
+              })),
+              parties: statusData.summary.parties,
+              courtName: statusData.summary.court_name,
+              date: statusData.summary.date,
+            };
+            
+            setDocuments((prev) =>
+              prev.map((d) =>
+                d.id === docId ? { ...d, status: 'completed', summary } : d
+              )
+            )
+            
+            onDocumentProcessed?.(summary);
+          } else if (statusData.status === 'error') {
+            throw new Error(statusData.error_message || 'Processing failed');
+          } else {
+            // Still processing, poll again
+            setTimeout(() => pollStatus(), 2000);
+          }
+        } catch (pollError: any) {
+          console.error('Polling error:', pollError);
           setDocuments((prev) =>
             prev.map((d) =>
-              d.id === docId ? { ...d, status: 'completed', summary } : d
+              d.id === docId ? { ...d, status: 'error', error: pollError.message } : d
             )
           );
-          
-          onDocumentProcessed?.(summary);
-        } else if (statusData.status === 'error') {
-          throw new Error(statusData.error_message || 'Processing failed');
-        } else {
-          // Still processing, poll again
-          setTimeout(pollStatus, 2000);
         }
       };
       
       pollStatus();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Document processing error:', error);
       setDocuments((prev) =>
         prev.map((d) =>
-          d.id === docId ? { ...d, status: 'error' } : d
+          d.id === docId ? { ...d, status: 'error', error: error.message } : d
         )
       );
     }
@@ -235,7 +245,12 @@ export const DocumentUpload = ({ language, onDocumentProcessed }: DocumentUpload
                       {doc.status === 'uploading' && (language === 'en' ? ' Uploading...' : ' अपलोड हो रहा है...')}
                       {doc.status === 'processing' && (language === 'en' ? ' AI Processing...' : ' AI प्रसंस्करण...')}
                       {doc.status === 'completed' && (language === 'en' ? ' Analysis Complete' : ' विश्लेषण पूर्ण')}
-                      {doc.status === 'error' && (language === 'en' ? ' Error' : ' त्रुटि')}
+                      {doc.status === 'error' && (
+                        <span>
+                          {language === 'en' ? ' Error' : ' त्रुटि'}
+                          {doc.error && `: ${doc.error}`}
+                        </span>
+                      )}
                     </p>
                   </div>
 

@@ -34,6 +34,14 @@ class StatuteRetrievalAgent(BaseAgent):
     async def process(self, context: AgentContext) -> AgentContext:
         """Retrieve relevant statutes based on query from database."""
         
+        # Ensure vector store is available
+        if not self.vector_store:
+            try:
+                from app.services.vector_store import get_vector_store
+                self.vector_store = await get_vector_store()
+            except Exception as e:
+                logger.warning(f"Vector store not available in StatuteRetrievalAgent: {e}")
+        
         # Extract sections mentioned in query
         sections = [e["value"] for e in context.entities if e["type"] == "section"]
         

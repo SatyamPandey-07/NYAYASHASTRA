@@ -85,6 +85,7 @@ class ChatMessageRequest(BaseModel):
     content: str = Field(..., min_length=1, max_length=5000)
     language: Language = Language.ENGLISH
     session_id: Optional[str] = None
+    domain: Optional[str] = None
 
 
 class ChatMessageResponse(BaseModel):

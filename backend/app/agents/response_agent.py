@@ -34,8 +34,16 @@ class ResponseSynthesisAgent(BaseAgent):
     async def process(self, context: AgentContext) -> AgentContext:
         """Synthesize final response from all gathered information."""
         
+        # Ensure LLM service is available
+        if not self.llm_service:
+            try:
+                from app.services.llm_service import get_llm_service
+                self.llm_service = await get_llm_service()
+            except Exception as e:
+                logger.error(f"Failed to initialize LLM service in ResponseSynthesisAgent: {e}")
+        
         # Build response based on available data
-        if self.llm_service:
+        if self.llm_service and self.llm_service.provider:
             response = await self._generate_llm_response(context)
         else:
             response = self._generate_template_response(context)

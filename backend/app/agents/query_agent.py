@@ -96,8 +96,12 @@ class QueryUnderstandingAgent(BaseAgent):
             logger.info(f"Extracted sections: {sections}")
         
         # 3. Detect legal domain
-        context.detected_domain = self._detect_domain(query)
-        logger.info(f"Detected domain: {context.detected_domain}")
+        if context.specified_domain and context.specified_domain != "all":
+            context.detected_domain = context.specified_domain
+            logger.info(f"Using specified domain: {context.detected_domain}")
+        else:
+            context.detected_domain = self._detect_domain(query)
+            logger.info(f"Automatically detected domain: {context.detected_domain}")
         
         # 4. Detect if IPC or BNS specific
         is_ipc = bool(IPC_PATTERN.search(context.query))
@@ -107,9 +111,19 @@ class QueryUnderstandingAgent(BaseAgent):
             context.applicable_acts.append("IPC")
         if is_bns:
             context.applicable_acts.append("BNS")
+            
+        # Add acts based on domain if none specified
+        if not context.applicable_acts and context.detected_domain:
+            from app.agents.regulatory_agent import JURISDICTION_ACTS
+            from app.schemas import LegalDomain
+            try:
+                domain_enum = LegalDomain(context.detected_domain)
+                context.applicable_acts.extend(JURISDICTION_ACTS.get(domain_enum, []))
+            except ValueError:
+                pass
         
-        # If neither specified but sections found, assume both
-        if sections and not is_ipc and not is_bns:
+        # If still no acts and sections found, default to both criminal codes
+        if not context.applicable_acts and sections:
             context.applicable_acts.extend(["IPC", "BNS"])
         
         # 5. Extract keywords

@@ -32,6 +32,8 @@ const Index = () => {
     currentMappings,
     error: apiError,
     sendMessage: sendApiMessage,
+    loadSession: loadApiSession,
+    clearMessages: clearApiMessages,
   } = useChat({ language, useStreaming: false });
 
   // Local state for fallback mode
@@ -86,10 +88,11 @@ const Index = () => {
     processNextAgent();
   }, []);
 
-  const handleSendMessage = useCallback(async (content: string) => {
+  const handleSendMessage = useCallback(async (content: string, domain?: string) => {
+    setIsNewChatStarted(true);
     if (useBackendAPI) {
       try {
-        await sendApiMessage(content);
+        await sendApiMessage(content, domain);
       } catch (err) {
         console.error('API Error:', err);
         // Fallback to local mode
@@ -142,8 +145,7 @@ const Index = () => {
   const currentCompletedAgents = useBackendAPI ? completedAgents : localCompletedAgents;
   const currentProcessingAgents = useBackendAPI ? processingAgents : localProcessingAgents;
 
-  const hasMessages = messages.length > 0;
-  const showChatView = hasMessages || isNewChatStarted;
+  const showChatView = isNewChatStarted;
 
   // Map API messages to component format
   const formattedMessages = messages.map(msg => ({
@@ -165,6 +167,7 @@ const Index = () => {
       <Header
         language={language}
         onLanguageChange={setLanguage}
+        onLogoClick={() => setIsNewChatStarted(false)}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -173,9 +176,18 @@ const Index = () => {
             <AuthenticatedDashboard 
               language={language} 
               onStartChat={(msg) => {
-                if (msg) handleSendMessage(msg);
-                else setIsNewChatStarted(true);
+                if (msg) {
+                  handleSendMessage(msg);
+                } else {
+                  if (useBackendAPI) clearApiMessages();
+                  else setLocalMessages([]);
+                  setIsNewChatStarted(true);
+                }
               }} 
+              onLoadSession={(sessionId) => {
+                setIsNewChatStarted(true);
+                if (useBackendAPI) loadApiSession(sessionId);
+              }}
             />
           ) : (
             <ChatInterface
@@ -183,6 +195,14 @@ const Index = () => {
               onSendMessage={handleSendMessage}
               isProcessing={processing}
               language={language}
+              onLoadSession={(sessionId) => {
+                if (useBackendAPI) loadApiSession(sessionId);
+              }}
+              onNewChat={() => {
+                if (useBackendAPI) clearApiMessages();
+                else setLocalMessages([]);
+                setIsNewChatStarted(true);
+              }}
             />
           )}
         </div>
