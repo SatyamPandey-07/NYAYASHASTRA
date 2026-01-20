@@ -101,29 +101,63 @@ class CitationAgent(BaseAgent):
         section = statute.get("section_number", "")
         act_name = statute.get("act_name", "")
         title = statute.get("title_en", "")
+        content = statute.get("content_en", "")
         
-        # Determine source URL
-        if act_code == "BNS":
-            url = f"https://egazette.gov.in/WriteReadData/2023/248044.pdf"
-            source = "gazette"
-        elif act_code == "IPC":
-            url = f"https://legislative.gov.in/actsofparliamentfromtheyear/indian-penal-code-1860"
-            source = "legislative"
+        # Use Indian Kanoon for ALL statutes - it's the most reliable source
+        # They have direct document IDs for major sections
+        IPC_SECTION_DOCS = {
+            "302": "1560742",  # Murder
+            "304": "1279877",  # Culpable homicide
+            "307": "1290514",  # Attempt to murder
+            "376": "1279834",  # Rape
+            "420": "1436241",  # Cheating
+            "498A": "110081",  # Cruelty by husband
+            "354": "1279834",  # Assault on woman
+            "306": "871857",   # Abetment to suicide
+            "379": "1279854",  # Theft
+            "384": "1279782",  # Extortion
+            "392": "1279793",  # Robbery
+            "406": "1569253",  # Criminal breach of trust
+            "415": "1306487",  # Cheating
+            "499": "1383364",  # Defamation
+            "500": "1436475",  # Defamation punishment
+            "120B": "635852",  # Criminal conspiracy
+            "34": "37788",     # Common intention
+        }
+        
+        if act_code == "IPC":
+            doc_id = IPC_SECTION_DOCS.get(section, "")
+            if doc_id:
+                url = f"https://indiankanoon.org/doc/{doc_id}/"
+            else:
+                url = f"https://indiankanoon.org/search/?formInput=section%20{section}%20IPC"
+            source = "indiankanoon"
+        elif act_code == "BNS":
+            # BNS sections on Indian Kanoon
+            url = f"https://indiankanoon.org/search/?formInput=section%20{section}%20BNS%20Bharatiya%20Nyaya%20Sanhita"
+            source = "indiankanoon"
         else:
             url = f"https://indiankanoon.org/search/?formInput={act_code}%20section%20{section}"
             source = "indiankanoon"
+        
+        # Make sure we have content for excerpt
+        excerpt = content[:500] + "..." if len(content) > 500 else content
+        if not excerpt:
+            excerpt = f"Section {section} of {act_name}: {title}"
         
         return {
             "id": str(citation_id),
             "title": f"{act_name} - Section {section}: {title}",
             "title_hi": statute.get("title_hi", ""),
             "source": source,
-            "source_name": OFFICIAL_SOURCES.get(source, {}).get("name", source),
+            "source_name": "Indian Kanoon",
             "url": url,
-            "excerpt": statute.get("content_en", "")[:200] + "...",
+            "excerpt": excerpt,
             "year": statute.get("year_enacted"),
             "type": "statute",
-            "verified": True
+            "verified": True,
+            "section_number": section,
+            "act_code": act_code
         }
     
     def _create_case_citation(self, case: Dict, citation_id: int) -> Dict:
@@ -134,15 +168,20 @@ class CitationAgent(BaseAgent):
         court = case.get("court", "")
         year = case.get("reporting_year")
         
-        # Generate URL if not provided
+        # Generate URL if not provided - use Indian Kanoon for reliable direct links
         if not source_url:
+            safe_name = re.sub(r'[^a-zA-Z0-9\s]', '', case_name)
+            encoded_name = safe_name.replace(' ', '%20')
+            
             if court == "supreme_court":
-                source_url = f"https://main.sci.gov.in/judgments"
-                source = "sci"
+                # Supreme Court judgments on Indian Kanoon
+                source_url = f"https://indiankanoon.org/search/?formInput={encoded_name}%20supreme%20court"
+                source = "indiankanoon"
+            elif court == "high_court":
+                source_url = f"https://indiankanoon.org/search/?formInput={encoded_name}%20high%20court"
+                source = "indiankanoon"
             else:
-                # Use Indian Kanoon for general search
-                safe_name = re.sub(r'[^a-zA-Z0-9\s]', '', case_name)
-                source_url = f"https://indiankanoon.org/search/?formInput={safe_name.replace(' ', '%20')}"
+                source_url = f"https://indiankanoon.org/search/?formInput={encoded_name}"
                 source = "indiankanoon"
         else:
             source = "indiankanoon" if "indiankanoon" in source_url else "sci"
@@ -151,6 +190,9 @@ class CitationAgent(BaseAgent):
         if citation_string:
             title = f"{case_name} ({citation_string})"
         
+        summary = case.get("summary_en", "")
+        excerpt = summary[:300] + "..." if len(summary) > 300 else summary if summary else None
+        
         return {
             "id": str(citation_id),
             "title": title,
@@ -158,9 +200,9 @@ class CitationAgent(BaseAgent):
             "source": source,
             "source_name": OFFICIAL_SOURCES.get(source, {}).get("name", source),
             "url": source_url,
-            "excerpt": case.get("summary_en", "")[:200] + "..." if case.get("summary_en") else None,
+            "excerpt": excerpt,
             "year": year,
-            "court": case.get("court_name", ""),
+            "court": case.get("court_name", court),
             "type": "case_law",
             "is_landmark": case.get("is_landmark", False),
             "verified": True

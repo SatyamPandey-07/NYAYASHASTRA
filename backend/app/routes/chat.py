@@ -19,7 +19,7 @@ from app.schemas import (
     AgentPipelineStatus
 )
 from app.agents.orchestrator import get_orchestrator
-from app.services.auth_service import get_current_user
+from app.services.auth_service import get_current_user_optional, get_current_user
 from app.services.chat_service import get_chat_service
 from app.database import get_db
 
@@ -29,7 +29,7 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 @router.post("/", response_model=dict)
 async def process_chat_message(
     request: ChatMessageRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_optional)
 ):
     """
     Process a legal query through the multi-agent pipeline.
@@ -113,7 +113,7 @@ async def process_chat_message(
 @router.post("/stream")
 async def process_chat_message_stream(
     request: ChatMessageRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_optional)
 ):
     """
     Process a legal query with streaming updates.

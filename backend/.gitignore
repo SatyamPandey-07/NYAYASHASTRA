@@ -121,7 +121,11 @@ dmypy.json
 
 # Uploads
 uploads/
-*.pdf
+
+# Include legal_data folder with CSV/PDF files
+!app/legal_data/
+!app/legal_data/**/*.csv
+!app/legal_data/**/*.pdf
 
 # Database
 *.db

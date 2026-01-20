@@ -155,7 +155,7 @@ async def get_section(
     return statute_to_dict(statute)
 
 
-@router.get("/comparison", response_model=IPCBNSComparisonResponse)
+@router.get("/comparison")
 async def get_ipc_bns_comparison(
     ipc_section: Optional[str] = Query(None, description="IPC section number"),
     bns_section: Optional[str] = Query(None, description="BNS section number"),
@@ -163,47 +163,56 @@ async def get_ipc_bns_comparison(
     db: Session = Depends(get_db)
 ):
     """Get IPC to BNS section comparisons from database."""
-    query = db.query(IPCBNSMapping).options(
-        joinedload(IPCBNSMapping.ipc_section),
-        joinedload(IPCBNSMapping.bns_section)
-    )
-    
-    # Use aliases if we need to join the same table twice
-    if ipc_section:
-        statute_ipc = aliased(Statute)
-        query = query.join(
-            statute_ipc, IPCBNSMapping.ipc_section_id == statute_ipc.id
-        ).filter(statute_ipc.section_number.ilike(f"%{ipc_section}%"))
-    
-    if bns_section:
-        statute_bns = aliased(Statute)
-        query = query.join(
-            statute_bns, IPCBNSMapping.bns_section_id == statute_bns.id
-        ).filter(statute_bns.section_number.ilike(f"%{bns_section}%"))
-    
-    mappings = query.all()
-    
-    # Filter by search query if provided
-    if search_query:
-        query_lower = search_query.lower()
-        filtered_mappings = []
-        for m in mappings:
-            ipc = m.ipc_section
-            bns = m.bns_section
-            if not ipc or not bns:
-                continue
-                
-            if (query_lower in (ipc.title_en or "").lower() or
-                query_lower in (bns.title_en or "").lower() or
-                query_lower in (ipc.section_number or "").lower() or
-                query_lower in (bns.section_number or "").lower()):
-                filtered_mappings.append(m)
-        mappings = filtered_mappings
-    
-    return {
-        "comparisons": [mapping_to_dict(m) for m in mappings],
-        "total": len(mappings)
-    }
+    try:
+        query = db.query(IPCBNSMapping).options(
+            joinedload(IPCBNSMapping.ipc_section),
+            joinedload(IPCBNSMapping.bns_section)
+        )
+        
+        # Use aliases if we need to join the same table twice
+        if ipc_section:
+            statute_ipc = aliased(Statute)
+            query = query.join(
+                statute_ipc, IPCBNSMapping.ipc_section_id == statute_ipc.id
+            ).filter(statute_ipc.section_number.ilike(f"%{ipc_section}%"))
+        
+        if bns_section:
+            statute_bns = aliased(Statute)
+            query = query.join(
+                statute_bns, IPCBNSMapping.bns_section_id == statute_bns.id
+            ).filter(statute_bns.section_number.ilike(f"%{bns_section}%"))
+        
+        mappings = query.all()
+        
+        # Filter by search query if provided
+        if search_query:
+            query_lower = search_query.lower()
+            filtered_mappings = []
+            for m in mappings:
+                ipc = m.ipc_section
+                bns = m.bns_section
+                if not ipc or not bns:
+                    continue
+                    
+                if (query_lower in (ipc.title_en or "").lower() or
+                    query_lower in (bns.title_en or "").lower() or
+                    query_lower in (ipc.section_number or "").lower() or
+                    query_lower in (bns.section_number or "").lower()):
+                    filtered_mappings.append(m)
+            mappings = filtered_mappings
+        
+        return {
+            "comparisons": [mapping_to_dict(m) for m in mappings if m.ipc_section and m.bns_section],
+            "total": len(mappings)
+        }
+    except Exception as e:
+        # Return empty data instead of error
+        import logging
+        logging.error(f"Error fetching comparisons: {e}")
+        return {
+            "comparisons": [],
+            "total": 0
+        }
 
 
 @router.get("/comparison/{ipc_section}")

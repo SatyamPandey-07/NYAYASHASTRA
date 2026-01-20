@@ -1,23 +1,34 @@
-import { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Header } from '@/components/Header';
-import { ChatInterface } from '@/components/ChatInterface';
-import { AuthenticatedDashboard } from '@/components/AuthenticatedDashboard';
-import { useChat } from '@/hooks/useApi';
+import { useState, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Header } from "@/components/Header";
+import { ChatInterface } from "@/components/ChatInterface";
+import { AuthenticatedDashboard } from "@/components/AuthenticatedDashboard";
+import { useChat } from "@/hooks/useApi";
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   contentHindi?: string;
-  citations?: Array<{ id: string; source: string; url: string; title: string }>;
-  statutes?: Array<{ id: string; section: string; act: string; content: string }>;
+  citations?: Array<{
+    id: string;
+    source: string;
+    url: string;
+    title: string;
+    excerpt?: string;
+  }>;
+  statutes?: Array<{
+    id: string;
+    section: string;
+    act: string;
+    content: string;
+  }>;
   timestamp: Date;
 }
 
 const Index = () => {
   const [isNewChatStarted, setIsNewChatStarted] = useState(false);
-  const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [language, setLanguage] = useState<"en" | "hi">("en");
   const [useBackendAPI, setUseBackendAPI] = useState(false);
 
   // Try to use the API hook, fallback to local state if backend not available
@@ -40,20 +51,24 @@ const Index = () => {
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [localIsProcessing, setLocalIsProcessing] = useState(false);
   const [localActiveAgent, setLocalActiveAgent] = useState<string | null>(null);
-  const [localCompletedAgents, setLocalCompletedAgents] = useState<string[]>([]);
-  const [localProcessingAgents, setLocalProcessingAgents] = useState<string[]>([]);
+  const [localCompletedAgents, setLocalCompletedAgents] = useState<string[]>(
+    [],
+  );
+  const [localProcessingAgents, setLocalProcessingAgents] = useState<string[]>(
+    [],
+  );
 
   // Check if backend is available
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const response = await fetch('http://localhost:8000/health');
+        const response = await fetch("http://localhost:8000/health");
         if (response.ok) {
           setUseBackendAPI(true);
-          console.log('✅ Backend connected');
+          console.log("✅ Backend connected");
         }
       } catch {
-        console.log('⚠️ Backend not available, using demo mode');
+        console.log("⚠️ Backend not available, using demo mode");
         setUseBackendAPI(false);
       }
     };
@@ -61,7 +76,15 @@ const Index = () => {
   }, []);
 
   const simulateAgentProcessing = useCallback(() => {
-    const agents = ['query', 'statute', 'case', 'regulatory', 'citation', 'summary', 'response'];
+    const agents = [
+      "query",
+      "statute",
+      "case",
+      "regulatory",
+      "citation",
+      "summary",
+      "response",
+    ];
     let currentIndex = 0;
 
     setLocalCompletedAgents([]);
@@ -73,12 +96,15 @@ const Index = () => {
         setLocalActiveAgent(agent);
         setLocalProcessingAgents([agent]);
 
-        setTimeout(() => {
-          setLocalCompletedAgents((prev) => [...prev, agent]);
-          setLocalProcessingAgents([]);
-          currentIndex++;
-          processNextAgent();
-        }, 400 + Math.random() * 400);
+        setTimeout(
+          () => {
+            setLocalCompletedAgents((prev) => [...prev, agent]);
+            setLocalProcessingAgents([]);
+            currentIndex++;
+            processNextAgent();
+          },
+          400 + Math.random() * 400,
+        );
       } else {
         setLocalActiveAgent(null);
         setLocalIsProcessing(false);
@@ -88,49 +114,70 @@ const Index = () => {
     processNextAgent();
   }, []);
 
-  const handleSendMessage = useCallback(async (content: string, domain?: string) => {
-    setIsNewChatStarted(true);
-    if (useBackendAPI) {
-      try {
-        await sendApiMessage(content, domain);
-      } catch (err) {
-        console.error('API Error:', err);
-        // Fallback to local mode
+  const handleSendMessage = useCallback(
+    async (content: string, domain?: string) => {
+      setIsNewChatStarted(true);
+      if (useBackendAPI) {
+        try {
+          await sendApiMessage(content, domain);
+        } catch (err) {
+          console.error("API Error:", err);
+          // Fallback to local mode
+          handleLocalMessage(content);
+        }
+      } else {
         handleLocalMessage(content);
       }
-    } else {
-      handleLocalMessage(content);
-    }
-  }, [useBackendAPI, sendApiMessage]);
+    },
+    [useBackendAPI, sendApiMessage],
+  );
 
-  const handleLocalMessage = useCallback((content: string) => {
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content,
-      timestamp: new Date(),
-    };
-
-    setLocalMessages((prev) => [...prev, userMessage]);
-    setLocalIsProcessing(true);
-    simulateAgentProcessing();
-
-    // Simulate AI response after agents complete
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: generateSampleResponse(content, 'en'),
-        contentHindi: generateSampleResponse(content, 'hi'),
-        citations: [
-          { id: '1', source: 'gazette', url: 'https://egazette.gov.in', title: 'Bhartiya Nyaya Sanhita, 2023 - Section 103' },
-          { id: '2', source: 'supreme_court', url: 'https://indiankanoon.org', title: 'State of Maharashtra v. Suresh (2023)' },
-        ],
+  const handleLocalMessage = useCallback(
+    (content: string) => {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: "user",
+        content,
         timestamp: new Date(),
       };
-      setLocalMessages((prev) => [...prev, assistantMessage]);
-    }, 3500);
-  }, [simulateAgentProcessing]);
+
+      setLocalMessages((prev) => [...prev, userMessage]);
+      setLocalIsProcessing(true);
+      simulateAgentProcessing();
+
+      // Simulate AI response after agents complete
+      setTimeout(() => {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: generateSampleResponse(content, "en"),
+          contentHindi: generateSampleResponse(content, "hi"),
+          citations: [
+            {
+              id: "1",
+              source: "indiankanoon",
+              url: "https://indiankanoon.org/doc/1560742/",
+              title: "Indian Penal Code - Section 302: Punishment for murder",
+              excerpt:
+                "Whoever commits murder shall be punished with death, or imprisonment for life, and shall also be liable to fine.",
+            },
+            {
+              id: "2",
+              source: "indiankanoon",
+              url: "https://indiankanoon.org/search/?formInput=section%20103%20BNS",
+              title:
+                "Bharatiya Nyaya Sanhita - Section 103: Punishment for murder",
+              excerpt:
+                "Whoever commits murder shall be punished with death or imprisonment for life, and shall also be liable to fine.",
+            },
+          ],
+          timestamp: new Date(),
+        };
+        setLocalMessages((prev) => [...prev, assistantMessage]);
+      }, 3500);
+    },
+    [simulateAgentProcessing],
+  );
 
   const handleStartChat = (query?: string) => {
     if (query) {
@@ -142,25 +189,33 @@ const Index = () => {
   const messages = useBackendAPI ? apiMessages : localMessages;
   const processing = useBackendAPI ? isProcessing : localIsProcessing;
   const currentActiveAgent = useBackendAPI ? activeAgent : localActiveAgent;
-  const currentCompletedAgents = useBackendAPI ? completedAgents : localCompletedAgents;
-  const currentProcessingAgents = useBackendAPI ? processingAgents : localProcessingAgents;
+  const currentCompletedAgents = useBackendAPI
+    ? completedAgents
+    : localCompletedAgents;
+  const currentProcessingAgents = useBackendAPI
+    ? processingAgents
+    : localProcessingAgents;
 
   const showChatView = isNewChatStarted;
 
   // Map API messages to component format
-  const formattedMessages = messages.map(msg => ({
-    id: msg.id,
-    role: msg.role,
-    content: msg.content,
-    contentHindi: msg.contentHindi,
-    citations: msg.citations?.map(c => ({
-      id: c.id,
-      source: c.source,
-      url: c.url,
-      title: c.title
-    })),
-    timestamp: msg.timestamp
-  }));
+  const formattedMessages = messages.map((msg) => {
+    console.log("Message citations:", msg.citations); // Debug logging
+    return {
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      contentHindi: msg.contentHindi,
+      citations: msg.citations?.map((c) => ({
+        id: c.id,
+        source: c.source,
+        url: c.url,
+        title: c.title,
+        excerpt: c.excerpt, // Include the legal text excerpt
+      })),
+      timestamp: msg.timestamp,
+    };
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -173,8 +228,8 @@ const Index = () => {
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
           {!showChatView ? (
-            <AuthenticatedDashboard 
-              language={language} 
+            <AuthenticatedDashboard
+              language={language}
               onStartChat={(msg) => {
                 if (msg) {
                   handleSendMessage(msg);
@@ -183,7 +238,7 @@ const Index = () => {
                   else setLocalMessages([]);
                   setIsNewChatStarted(true);
                 }
-              }} 
+              }}
               onLoadSession={(sessionId) => {
                 setIsNewChatStarted(true);
                 if (useBackendAPI) loadApiSession(sessionId);
@@ -213,10 +268,14 @@ const Index = () => {
 
 // Sample response generator (for demo mode)
 function generateSampleResponse(query: string, lang: string): string {
-  const isHindi = lang === 'hi';
+  const isHindi = lang === "hi";
   const queryLower = query.toLowerCase();
 
-  if (queryLower.includes('murder') || queryLower.includes('302') || queryLower.includes('हत्या')) {
+  if (
+    queryLower.includes("murder") ||
+    queryLower.includes("302") ||
+    queryLower.includes("हत्या")
+  ) {
     return isHindi
       ? `**IPC धारा 302 - हत्या के लिए सजा**
 
@@ -257,7 +316,11 @@ The Supreme Court in *Bachan Singh v. State of Punjab* (1980) established the "r
 ⚖️ *This information is for educational purposes. Please consult a qualified legal professional for specific legal advice.*`;
   }
 
-  if (queryLower.includes('theft') || queryLower.includes('चोरी') || queryLower.includes('379')) {
+  if (
+    queryLower.includes("theft") ||
+    queryLower.includes("चोरी") ||
+    queryLower.includes("379")
+  ) {
     return isHindi
       ? `**IPC धारा 379 - चोरी के लिए सजा**
 

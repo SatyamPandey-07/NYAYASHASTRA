@@ -1,46 +1,157 @@
-# NYAYASHASTRA
-
 <div align="center">
 
-![NYAYASHASTRA](https://img.shields.io/badge/NYAYASHASTRA-AI%20Pro-blueviolet?style=for-the-badge)
+# 🏛️ NYAYASHASTRA
+
+![NYAYASHASTRA](https://img.shields.io/badge/NYAYASHASTRA-AI%20Legal%20Assistant-blueviolet?style=for-the-badge)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
+![Python](https://img.shields.io/badge/Python-3.10+-yellow?style=for-the-badge&logo=python)
+![React](https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript)
 
-**🏛️ AI-Powered Legal Helper for India**
+**AI-Powered Legal Assistant for Indian Law**
 
-*Production-grade Multi-Agent RAG System for Indian Law*
+_A production-grade Multi-Agent RAG System delivering precise, verifiable, bilingual (English + Hindi) legal answers_
 
-[Live Demo](http://localhost:5173) · [API Docs](http://localhost:8000/docs) · [Report Bug](https://github.com/issues)
+[Live Demo](#-quick-start) · [API Docs](http://localhost:8000/docs) · [Report Bug](https://github.com/SatyamPandey-07/NYAYASHASTRA/issues)
 
 </div>
 
 ---
 
-## ✨ Features
+## 📋 Table of Contents
 
-| Feature | Description |
-|---------|-------------|
-| 🤖 **Multi-Agent Intelligence** | 7 specialized AI agents working in orchestrated pipeline |
-| ⚖️ **IPC ↔ BNS Mapping** | Automatic cross-referencing between old and new criminal laws |
-| 🌐 **Bilingual Support** | Full English and Hindi (हिंदी) language support |
-| 📚 **Verified Citations** | Links only to official government gazettes and sources |
-| 📄 **Document Analysis** | Upload and summarize court orders, FIRs, and judgments |
-| 🏛️ **Case Law Intelligence** | Supreme Court and High Court judgment retrieval |
-| 🔍 **Semantic Search** | Vector-based retrieval for precise legal answers |
-| ⚡ **Real-time Processing** | Live agent status updates with 3D visualization |
+- [Overview](#-overview)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#-architecture)
+- [Quick Start](#-quick-start)
+- [Project Structure](#-project-structure)
+- [Multi-Agent Pipeline](#-multi-agent-pipeline)
+- [API Reference](#-api-reference)
+- [Database Schema](#-database-schema)
+- [Environment Variables](#-environment-variables)
+- [Contributing](#-contributing)
+- [Disclaimer](#-disclaimer)
+- [License](#-license)
 
 ---
 
-## 🖥️ Screenshots
+## 🎯 Overview
 
-### Chat Interface with Agent Pipeline
-The main interface shows the multi-agent processing in real-time as your legal query is analyzed.
+**NYAYASHASTRA** is an AI-powered legal assistant specifically designed for Indian law. It leverages a sophisticated multi-agent Retrieval-Augmented Generation (RAG) system to provide accurate, contextual, and verifiable legal information. The system specializes in:
 
-### 3D Agent Orchestration
-Interactive 3D visualization of agents processing your query with data flow animations.
+- **Indian Penal Code (IPC)** - The colonial-era criminal code (1860)
+- **Bhartiya Nyaya Sanhita (BNS)** - The new criminal code (2023)
+- **IPC ↔ BNS Cross-Referencing** - Automatic mapping between old and new laws (213+ mappings)
+- **Indian Regulatory Statutes** - Various civil and corporate laws
 
-### IPC-BNS Comparison Panel
-Side-by-side comparison of old IPC sections with new BNS equivalents.
+---
+
+## ✨ Features
+
+| Feature                         | Description                                                       |
+| ------------------------------- | ----------------------------------------------------------------- |
+| 🤖 **Multi-Agent Intelligence** | 7 specialized AI agents working in orchestrated pipeline          |
+| ⚖️ **IPC ↔ BNS Mapping**        | 213+ automatic cross-references between old and new criminal laws |
+| 🌐 **Bilingual Support**        | Full English and Hindi (हिंदी) language support                   |
+| 📚 **Verified Citations**       | Links only to official government gazettes and sources            |
+| 📄 **Document Analysis**        | Upload and summarize court orders, FIRs, and judgments            |
+| 🏛️ **Case Law Intelligence**    | Supreme Court and High Court judgment retrieval                   |
+| 🔍 **Semantic Search**          | Vector-based retrieval using ChromaDB for precise legal answers   |
+| ⚡ **Real-time Processing**     | Live agent status updates with 3D visualization                   |
+| 🎙️ **Voice Input**              | Speech-to-text support for queries in English and Hindi           |
+| 📱 **Responsive Design**        | Works seamlessly on desktop and mobile devices                    |
+| 🔐 **Authentication**           | Secure user authentication via Clerk                              |
+| 💬 **Chat History**             | Persistent conversation history across sessions                   |
+| 🎨 **3D Visualization**         | Interactive agent orchestration visualization using Three.js      |
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+| Technology                       | Purpose                 |
+| -------------------------------- | ----------------------- |
+| **React 18**                     | UI Framework            |
+| **TypeScript**                   | Type Safety             |
+| **Vite**                         | Build Tool & Dev Server |
+| **TailwindCSS**                  | Styling                 |
+| **Framer Motion**                | Animations              |
+| **Three.js / React Three Fiber** | 3D Visualizations       |
+| **Shadcn/ui**                    | UI Components           |
+| **Clerk**                        | Authentication          |
+| **React Query**                  | Data Fetching & Caching |
+| **React Router**                 | Client-side Routing     |
+
+### Backend
+
+| Technology                | Purpose                            |
+| ------------------------- | ---------------------------------- |
+| **FastAPI**               | REST API Framework                 |
+| **Python 3.10+**          | Backend Language                   |
+| **SQLAlchemy**            | ORM                                |
+| **PostgreSQL / SQLite**   | Database                           |
+| **ChromaDB**              | Vector Database                    |
+| **LangChain**             | LLM Orchestration                  |
+| **Groq API**              | Fast LLM Inference (Llama 3.3 70B) |
+| **OpenAI API**            | Fallback LLM                       |
+| **Sentence Transformers** | Text Embeddings                    |
+| **Uvicorn**               | ASGI Server                        |
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              FRONTEND                                     │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │   Landing   │  │    Chat     │  │ Comparison  │  │  Documents  │     │
+│  │    Page     │  │  Interface  │  │    View     │  │   Upload    │     │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘     │
+│                              │                                           │
+│                    ┌─────────┴─────────┐                                │
+│                    │   React Query     │                                │
+│                    │   API Service     │                                │
+│                    └─────────┬─────────┘                                │
+└──────────────────────────────┼──────────────────────────────────────────┘
+                               │ HTTP/REST
+┌──────────────────────────────┼──────────────────────────────────────────┐
+│                           BACKEND                                        │
+│                    ┌─────────┴─────────┐                                │
+│                    │    FastAPI        │                                │
+│                    │   (CORS, Auth)    │                                │
+│                    └─────────┬─────────┘                                │
+│                              │                                           │
+│         ┌────────────────────┼────────────────────┐                     │
+│         │                    │                    │                     │
+│  ┌──────┴──────┐  ┌─────────┴─────────┐  ┌──────┴──────┐              │
+│  │   Chat      │  │    Statutes       │  │  Documents  │              │
+│  │   Routes    │  │    Routes         │  │   Routes    │              │
+│  └──────┬──────┘  └─────────┬─────────┘  └──────┬──────┘              │
+│         │                   │                    │                     │
+│  ┌──────┴───────────────────┴────────────────────┴──────┐              │
+│  │              AGENT ORCHESTRATOR                       │              │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐    │              │
+│  │  │ Query   │→│ Statute │→│  Case   │→│Regulatory│    │              │
+│  │  │ Agent   │ │ Agent   │ │ Agent   │ │ Agent   │    │              │
+│  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘    │              │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐               │              │
+│  │  │Citation │→│Summary  │→│Response │               │              │
+│  │  │ Agent   │ │ Agent   │ │ Agent   │               │              │
+│  │  └─────────┘ └─────────┘ └─────────┘               │              │
+│  └───────────────────────────────────────────────────────┘              │
+│                              │                                           │
+│         ┌────────────────────┼────────────────────┐                     │
+│         │                    │                    │                     │
+│  ┌──────┴──────┐  ┌─────────┴─────────┐  ┌──────┴──────┐              │
+│  │ PostgreSQL  │  │    ChromaDB       │  │  Groq/      │              │
+│  │  Database   │  │  Vector Store     │  │  OpenAI     │              │
+│  └─────────────┘  └───────────────────┘  └─────────────┘              │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -48,17 +159,27 @@ Side-by-side comparison of old IPC sections with new BNS equivalents.
 
 ### Prerequisites
 
-- **Node.js** 18+ (for frontend)
-- **Python** 3.10+ (for backend)
+- **Node.js** 18+
+- **Python** 3.10+
 - **npm** or **yarn**
+- **Git**
 
-### Frontend Setup
+### One-Command Start (Windows)
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/NYAYASHASTRA-ai-pro.git
-cd NYAYASHASTRA-ai-pro
+git clone https://github.com/SatyamPandey-07/NYAYASHASTRA.git
+cd NYAYASHASTRA
 
+# Run the startup script
+.\start-dev.bat
+```
+
+### Manual Setup
+
+#### 1. Frontend Setup
+
+```bash
 # Install dependencies
 npm install
 
@@ -66,7 +187,7 @@ npm install
 npm run dev
 ```
 
-### Backend Setup
+#### 2. Backend Setup
 
 ```bash
 # Navigate to backend
@@ -84,231 +205,315 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Copy environment file
+# Copy environment file and configure
 cp .env.example .env
+
+# Seed the database with IPC/BNS data (213 mappings, 452 statutes)
+python -m app.seed_database
 
 # Start API server
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-### Access the Application
+### 3. Access the Application
 
-- **Frontend**: http://localhost:5173
-- **API Docs**: http://localhost:8000/docs
-- **Health Check**: http://localhost:8000/health
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         FRONTEND (React + Vite)                      │
-├─────────────────────────────────────────────────────────────────────┤
-│  ┌──────────┐  ┌──────────────┐  ┌─────────────┐  ┌─────────────┐   │
-│  │   Chat   │  │  3D Agent    │  │  IPC-BNS    │  │  Document   │   │
-│  │Interface │  │Visualization │  │ Comparison  │  │   Upload    │   │
-│  └──────────┘  └──────────────┘  └─────────────┘  └─────────────┘   │
-│                              ↓ API                                   │
-├─────────────────────────────────────────────────────────────────────┤
-│                         BACKEND (FastAPI)                            │
-├─────────────────────────────────────────────────────────────────────┤
-│                      AGENT ORCHESTRATOR                              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
-│  │  Query   │→ │ Statute  │→ │Case Law  │→ │Regulatory│            │
-│  │Understanding│ │Retrieval │  │Intelligence│  │ Filter   │            │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘            │
-│                      ↓                                               │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                          │
-│  │Citation  │→ │Summary   │→ │Response  │                          │
-│  │  Agent   │  │  Agent   │  │Synthesis │                          │
-│  └──────────┘  └──────────┘  └──────────┘                          │
-├─────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
-│  │  PostgreSQL  │  │   ChromaDB   │  │   OpenAI/    │              │
-│  │   (Data)     │  │  (Vectors)   │  │  Local LLM   │              │
-│  └──────────────┘  └──────────────┘  └──────────────┘              │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🤖 Agent Pipeline
-
-| Agent | Purpose | Color |
-|-------|---------|-------|
-| **Query Understanding** | Language detection, domain classification, intent extraction | 🔵 Cyan |
-| **Statute Retrieval** | Retrieves IPC/BNS sections, handles cross-mapping | 🟣 Purple |
-| **Case Law Intelligence** | Finds relevant Supreme Court & High Court judgments | 🟢 Green |
-| **Regulatory Filter** | Filters by jurisdiction and legal category | 🟡 Yellow |
-| **Citation Agent** | Generates verifiable citations to official sources | 🔴 Pink |
-| **Summarization** | Extracts key information from legal documents | 🔵 Teal |
-| **Response Synthesis** | Generates comprehensive bilingual responses | 🟣 Violet |
+| Service          | URL                                  |
+| ---------------- | ------------------------------------ |
+| **Frontend**     | http://localhost:5173 (or 8080/8081) |
+| **API Docs**     | http://localhost:8000/docs           |
+| **ReDoc**        | http://localhost:8000/redoc          |
+| **Health Check** | http://localhost:8000/health         |
 
 ---
 
 ## 📁 Project Structure
 
 ```
-NYAYASHASTRA-ai-pro/
-├── src/                          # Frontend source
-│   ├── components/               # React components
-│   │   ├── AgentOrchestration3D.tsx
-│   │   ├── ChatInterface.tsx
-│   │   ├── IPCBNSComparison.tsx
-│   │   ├── DocumentUpload.tsx
-│   │   └── ...
-│   ├── hooks/                    # Custom React hooks
-│   │   └── useApi.ts
-│   ├── services/                 # API services
-│   │   └── api.ts
-│   └── pages/                    # Page components
-│       └── Index.tsx
-├── backend/                      # Python backend
-│   ├── app/
-│   │   ├── agents/              # AI agents
-│   │   ├── routes/              # API routes
-│   │   ├── services/            # Business logic
-│   │   ├── data/                # Seed data
-│   │   ├── models.py            # Database models
-│   │   ├── schemas.py           # Pydantic schemas
-│   │   └── main.py              # FastAPI app
+NYAYASHASTRA/
+├── 📁 backend/                    # FastAPI Backend
+│   ├── 📁 app/
+│   │   ├── 📁 agents/             # Multi-Agent System
+│   │   │   ├── base.py            # Base agent class
+│   │   │   ├── orchestrator.py    # Agent coordination
+│   │   │   ├── query_agent.py     # Query understanding
+│   │   │   ├── statute_agent.py   # Statute retrieval
+│   │   │   ├── case_agent.py      # Case law retrieval
+│   │   │   ├── regulatory_agent.py# Domain filtering
+│   │   │   ├── citation_agent.py  # Citation verification
+│   │   │   ├── summarization_agent.py
+│   │   │   └── response_agent.py  # Response synthesis
+│   │   ├── 📁 data/
+│   │   │   ├── ipc_bns_chart.csv  # 250 IPC-BNS mappings
+│   │   │   └── legal_seeds.py     # Data loader
+│   │   ├── 📁 routes/
+│   │   │   ├── chat.py            # Chat API endpoints
+│   │   │   ├── statutes.py        # Statute endpoints
+│   │   │   ├── documents.py       # Document upload
+│   │   │   └── cases.py           # Case law endpoints
+│   │   ├── 📁 services/
+│   │   │   ├── llm_service.py     # Groq/OpenAI integration
+│   │   │   ├── vector_store.py    # ChromaDB service
+│   │   │   ├── chat_service.py    # Chat logic
+│   │   │   ├── statute_service.py # Statute queries
+│   │   │   └── case_service.py    # Case law queries
+│   │   ├── config.py              # Settings management
+│   │   ├── database.py            # DB connection
+│   │   ├── models.py              # SQLAlchemy models
+│   │   ├── schemas.py             # Pydantic schemas
+│   │   ├── main.py                # FastAPI app
+│   │   └── seed_database.py       # DB seeder
 │   ├── requirements.txt
 │   └── .env.example
-├── public/                       # Static assets
+│
+├── 📁 src/                        # React Frontend
+│   ├── 📁 components/
+│   │   ├── ChatInterface.tsx      # Main chat UI
+│   │   ├── Header.tsx             # Navigation header
+│   │   ├── LandingPage.tsx        # Home page
+│   │   ├── AgentOrchestration3D.tsx # 3D visualization
+│   │   ├── AgentStatusPanel.tsx   # Agent status display
+│   │   ├── EnhancedIPCBNSComparison.tsx
+│   │   ├── CaseLawsPanel.tsx
+│   │   ├── CitationsPanel.tsx
+│   │   ├── DocumentUpload.tsx
+│   │   └── 📁 ui/                 # Shadcn components
+│   ├── 📁 pages/
+│   │   ├── Index.tsx              # Dashboard
+│   │   ├── Comparison.tsx         # IPC-BNS comparison
+│   │   ├── Documents.tsx          # Document management
+│   │   └── SignInPage.tsx
+│   ├── 📁 services/
+│   │   └── api.ts                 # API client
+│   ├── 📁 hooks/
+│   │   ├── useApi.ts              # API hooks
+│   │   └── useChatContext.tsx     # Chat state
+│   └── App.tsx
+│
 ├── package.json
+├── vite.config.ts
+├── tailwind.config.ts
+├── start-dev.bat                  # Windows startup script
 └── README.md
 ```
 
 ---
 
-## 🔌 API Endpoints
+## 🤖 Multi-Agent Pipeline
 
-### Chat
-```http
-POST /api/chat/                  # Process legal query
-POST /api/chat/stream            # Stream processing (SSE)
-WS   /api/chat/ws/{session_id}   # WebSocket chat
-GET  /api/chat/agents            # Get agent info
+NYAYASHASTRA uses a sophisticated 7-agent pipeline to process legal queries:
+
 ```
-
-### Statutes
-```http
-GET  /api/statutes/              # List statutes
-GET  /api/statutes/search        # Search statutes
-GET  /api/statutes/section/{id}  # Get section
-GET  /api/statutes/comparison    # IPC-BNS comparison
-```
-
-### Documents
-```http
-POST /api/documents/upload       # Upload PDF
-GET  /api/documents/status/{id}  # Processing status
-DELETE /api/documents/{id}       # Delete document
+User Query
+    │
+    ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                     AGENT ORCHESTRATOR                            │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  1️⃣ ┌─────────────────┐                                          │
+│     │  Query Agent    │  • Language detection (EN/HI)            │
+│     │                 │  • Domain classification                  │
+│     │                 │  • Intent extraction                      │
+│     └────────┬────────┘  • Query reformulation                   │
+│              │                                                    │
+│  2️⃣ ┌────────┴────────┐  3️⃣ ┌─────────────────┐                  │
+│     │ Statute Agent   │     │  Case Agent     │                  │
+│     │                 │     │                 │                  │
+│     │ • IPC sections  │     │ • SC judgments  │                  │
+│     │ • BNS sections  │     │ • HC judgments  │                  │
+│     │ • Vector search │     │ • Landmark cases│                  │
+│     └────────┬────────┘     └────────┬────────┘                  │
+│              │                       │                            │
+│              └───────────┬───────────┘                            │
+│                          │                                        │
+│  4️⃣ ┌────────────────────┴────────────────────┐                   │
+│     │         Regulatory Agent                │                   │
+│     │  • Jurisdiction filtering               │                   │
+│     │  • Domain relevance scoring             │                   │
+│     └────────────────────┬────────────────────┘                   │
+│                          │                                        │
+│  5️⃣ ┌────────────────────┴────────────────────┐                   │
+│     │          Citation Agent                 │                   │
+│     │  • Source verification                  │                   │
+│     │  • Official gazette links               │                   │
+│     └────────────────────┬────────────────────┘                   │
+│                          │                                        │
+│  6️⃣ ┌────────────────────┴────────────────────┐                   │
+│     │       Summarization Agent               │                   │
+│     │  • Key points extraction                │                   │
+│     │  • Bilingual summaries                  │                   │
+│     └────────────────────┬────────────────────┘                   │
+│                          │                                        │
+│  7️⃣ ┌────────────────────┴────────────────────┐                   │
+│     │         Response Agent                  │                   │
+│     │  • Final answer synthesis               │                   │
+│     │  • Citation formatting                  │                   │
+│     │  • Hindi translation (if needed)        │                   │
+│     └────────────────────┬────────────────────┘                   │
+│                          │                                        │
+└──────────────────────────┼────────────────────────────────────────┘
+                           │
+                           ▼
+              📋 Legal Response with Citations
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## 📡 API Reference
 
-### Frontend
-- **React 18** - UI framework
-- **Vite** - Build tool
-- **TypeScript** - Type safety
-- **TailwindCSS** - Styling
-- **Three.js / React Three Fiber** - 3D visualization
-- **Framer Motion** - Animations
-- **shadcn/ui** - UI components
+### Chat Endpoints
 
-### Backend
-- **FastAPI** - API framework
-- **SQLAlchemy** - ORM
-- **ChromaDB** - Vector database
-- **LangChain** - LLM orchestration
-- **Sentence Transformers** - Embeddings
-- **OpenAI** - LLM (optional)
+| Method | Endpoint                  | Description                        |
+| ------ | ------------------------- | ---------------------------------- |
+| `POST` | `/api/chat`               | Send a legal query                 |
+| `POST` | `/api/chat/stream`        | Stream response with agent updates |
+| `GET`  | `/api/chat/history`       | Get chat history                   |
+| `GET`  | `/api/chat/sessions/{id}` | Get specific session               |
+
+### Statute Endpoints
+
+| Method | Endpoint                      | Description             |
+| ------ | ----------------------------- | ----------------------- |
+| `GET`  | `/api/statutes`               | List all statutes       |
+| `GET`  | `/api/statutes/search`        | Search statutes         |
+| `GET`  | `/api/statutes/section/{num}` | Get specific section    |
+| `GET`  | `/api/statutes/comparison`    | IPC-BNS comparison list |
+
+### Document Endpoints
+
+| Method | Endpoint                      | Description             |
+| ------ | ----------------------------- | ----------------------- |
+| `POST` | `/api/documents/upload`       | Upload document         |
+| `GET`  | `/api/documents/status/{id}`  | Check processing status |
+| `GET`  | `/api/documents/{id}/summary` | Get document summary    |
+
+### Case Endpoints
+
+| Method | Endpoint            | Description      |
+| ------ | ------------------- | ---------------- |
+| `GET`  | `/api/cases`        | List case laws   |
+| `GET`  | `/api/cases/search` | Search cases     |
+| `GET`  | `/api/cases/{id}`   | Get case details |
 
 ---
 
-## 🌐 Environment Variables
+## 🗄️ Database Schema
 
-Create `.env` files in both root and `backend/` directories:
+### Core Tables
 
-### Frontend (.env)
-```env
-VITE_API_URL=http://localhost:8000
+```sql
+-- Statutes (IPC/BNS sections) - 452 records
+statutes
+├── id (PK)
+├── section_number
+├── act_code (IPC, BNS)
+├── act_name
+├── title_en / title_hi
+├── content_en / content_hi
+├── domain
+├── punishment_description
+├── is_bailable / is_cognizable
+└── embedding_id (→ ChromaDB)
+
+-- IPC-BNS Mappings - 213 records
+ipc_bns_mappings
+├── id (PK)
+├── ipc_section_id (FK)
+├── bns_section_id (FK)
+├── mapping_type (exact, modified, merged, split)
+├── changes (JSON)
+├── punishment_changed
+└── old_punishment / new_punishment
+
+-- Case Laws - 8+ landmark cases
+case_laws
+├── id (PK)
+├── case_number
+├── case_name / case_name_hi
+├── court (supreme_court, high_court)
+├── judgment_date
+├── summary_en / summary_hi
+├── citation_string
+└── is_landmark
+
+-- Chat Sessions & Messages
+chat_sessions → chat_messages
 ```
 
-### Backend (.env)
+---
+
+## ⚙️ Environment Variables
+
+Create a `.env` file in the `backend/` directory:
+
 ```env
-# API
+# API Configuration
 API_HOST=0.0.0.0
 API_PORT=8000
 API_DEBUG=true
+CORS_ORIGINS=http://localhost:5173,http://localhost:8080,http://localhost:8081
 
-# Database
-DATABASE_URL=sqlite:///./NYAYASHASTRA.db
+# Database (PostgreSQL or SQLite)
+DATABASE_URL=sqlite:///./nyayguru.db
+# DATABASE_URL=postgresql://user:pass@host:5432/dbname
 
-# Vector Store
+# Vector Database
 CHROMA_PERSIST_DIR=./chroma_db
 EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
 
-# LLM (optional)
-OPENAI_API_KEY=your_key_here
+# LLM Configuration (Groq - Primary)
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.3-70b-versatile
 
-# CORS
-CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+# OpenAI (Fallback)
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-4-turbo-preview
 
 # Clerk Authentication
 CLERK_SECRET_KEY=your_clerk_secret_key
 ```
 
----
+Create a `.env` in root for frontend:
 
-## 🔐 Authentication
-This project uses **Clerk** for user authentication. 
-- **Frontend**: Users are redirected to sign in before accessing legal tools.
-- **Backend**: API requests are verified using Clerk JWT tokens.
-
+```env
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+```
 
 ---
 
-## 📚 Legal Coverage
+## 🧪 Testing
 
-### Currently Supported
-- ✅ Indian Penal Code (IPC), 1860
-- ✅ Bhartiya Nyaya Sanhita (BNS), 2023
-- ✅ IPC to BNS Cross-Mapping
-- ✅ Supreme Court Landmark Cases
-- ✅ High Court Judgments
+```bash
+# Frontend tests
+npm test
 
-### Coming Soon
-- 🔜 Criminal Procedure Code (CrPC)
-- 🔜 Bhartiya Nagarik Suraksha Sanhita (BNSS)
-- 🔜 Indian Evidence Act (IEA)
-- 🔜 Bhartiya Sakshya Adhiniyam (BSA)
-- 🔜 Constitutional Law
-- 🔜 Consumer Protection Act
+# Backend tests
+cd backend
+pytest
 
----
-
-## ⚠️ Disclaimer
-
-> **This software is for informational and educational purposes only.**
-> 
-> It does not constitute legal advice and should not be relied upon as such. For specific legal matters, please consult a qualified legal professional.
+# With coverage
+pytest --cov=app
+```
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
-
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+---
+
+## ⚠️ Disclaimer
+
+> **IMPORTANT**: This service is for **informational purposes only** and does **not constitute legal advice**.
+>
+> The information provided by NYAYASHASTRA should not be considered as a substitute for professional legal counsel. Always consult a qualified legal professional for specific legal matters.
+>
+> While we strive for accuracy, laws and their interpretations can change. Users should verify all information with official government sources.
 
 ---
 
@@ -318,10 +523,24 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+## 👥 Authors
+
+- **Satyam Pandey** - _Initial work_ - [SatyamPandey-07](https://github.com/SatyamPandey-07)
+
+---
+
+## 🙏 Acknowledgments
+
+- Indian Government for making legal documents publicly accessible
+- Groq for fast LLM inference
+- The open-source community for amazing tools
+
+---
+
 <div align="center">
 
 **Made with ❤️ for Indian Legal Community**
 
-*NYAYASHASTRA - न्यायगुरु AI प्रो*
+⭐ Star this repo if you find it helpful!
 
 </div>

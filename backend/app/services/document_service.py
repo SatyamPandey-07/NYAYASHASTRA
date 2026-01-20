@@ -225,6 +225,134 @@ class DocumentService:
         
         return "legal_document"
     
+    async def find_citation_in_document(
+        self, 
+        document_id: str, 
+        excerpt: str
+    ) -> Dict[str, Any]:
+        """
+        Find and highlight a citation excerpt in a document.
+        Returns the document content with highlight coordinates.
+        """
+        document = self.documents.get(document_id)
+        
+        if not document:
+            return {
+                "found": False,
+                "error": "Document not found"
+            }
+        
+        content = document.get("content", "")
+        if not content:
+            return {
+                "found": False,
+                "error": "Document content not available"
+            }
+        
+        # Normalize text for fuzzy matching
+        normalized_excerpt = excerpt.lower().strip()
+        normalized_content = content.lower()
+        
+        # Try exact match first
+        start_idx = normalized_content.find(normalized_excerpt)
+        
+        if start_idx != -1:
+            return {
+                "found": True,
+                "startIndex": start_idx,
+                "endIndex": start_idx + len(excerpt),
+                "exactMatch": True,
+                "confidence": 100,
+                "documentContent": content,
+                "highlightedSections": [{
+                    "text": content[start_idx:start_idx + len(excerpt)],
+                    "startIndex": start_idx,
+                    "endIndex": start_idx + len(excerpt),
+                    "confidence": 100
+                }]
+            }
+        
+        # Try fuzzy matching - find the best matching substring
+        from difflib import SequenceMatcher
+        
+        best_match = None
+        best_ratio = 0.0
+        window_size = len(excerpt) + 50  # Allow for some variance
+        
+        for i in range(0, len(content) - len(excerpt), 20):
+            window = content[i:i + window_size]
+            ratio = SequenceMatcher(None, excerpt.lower(), window.lower()).ratio()
+            
+            if ratio > best_ratio and ratio > 0.7:  # 70% similarity threshold
+                best_ratio = ratio
+                best_match = {
+                    "text": window[:len(excerpt)],
+                    "startIndex": i,
+                    "endIndex": i + len(excerpt),
+                    "confidence": int(ratio * 100)
+                }
+        
+        if best_match:
+            return {
+                "found": True,
+                "exactMatch": False,
+                "confidence": best_match["confidence"],
+                "documentContent": content,
+                "highlightedSections": [best_match]
+            }
+        
+        return {
+            "found": False,
+            "error": "Citation excerpt not found in document",
+            "documentContent": content,
+            "highlightedSections": []
+        }
+    
+    async def extract_text_with_coordinates(self, document_id: str) -> Dict[str, Any]:
+        """
+        Extract text with word-level coordinates from a PDF document.
+        Useful for precise highlighting in PDF viewers.
+        """
+        document = self.documents.get(document_id)
+        
+        if not document:
+            return {"error": "Document not found", "words": []}
+        
+        file_path = document.get("file_path", "")
+        
+        if not file_path.lower().endswith('.pdf'):
+            return {"error": "Only PDF files support coordinate extraction", "words": []}
+        
+        if not PDF_AVAILABLE:
+            return {"error": "pdfplumber not available", "words": []}
+        
+        try:
+            words_with_coords = []
+            
+            with pdfplumber.open(file_path) as pdf:
+                for page_num, page in enumerate(pdf.pages, 1):
+                    words = page.extract_words()
+                    
+                    for word in words:
+                        words_with_coords.append({
+                            "text": word["text"],
+                            "page": page_num,
+                            "x0": word["x0"],
+                            "y0": word["top"],
+                            "x1": word["x1"],
+                            "y1": word["bottom"]
+                        })
+            
+            return {
+                "success": True,
+                "totalPages": len(pdf.pages) if 'pdf' in dir() else 0,
+                "words": words_with_coords
+            }
+            
+        except Exception as e:
+            logger.error(f"Error extracting coordinates: {e}")
+            return {"error": str(e), "words": []}
+    
     async def delete_document(self, document_id: str) -> bool:
         """Delete a document."""
         document = self.documents.get(document_id)

@@ -9,7 +9,7 @@ from datetime import datetime
 
 from app.database import init_db, get_db_context
 from app.models import Statute, IPCBNSMapping, CaseLaw, Court
-from app.data.legal_seeds import (
+from app.legal_data.legal_seeds import (
     IPC_SECTIONS, 
     BNS_SECTIONS, 
     IPC_BNS_MAPPINGS, 

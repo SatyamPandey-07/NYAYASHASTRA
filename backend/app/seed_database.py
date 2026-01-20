@@ -10,7 +10,7 @@ from datetime import datetime
 
 from app.database import SessionLocal, init_db
 from app.models import Statute, IPCBNSMapping, CaseLaw, CaseStatuteLink
-from app.data.legal_seeds import (
+from app.legal_data.legal_seeds import (
     get_ipc_sections,
     get_bns_sections,
     get_mappings,

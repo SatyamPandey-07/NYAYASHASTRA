@@ -5,11 +5,28 @@ Handles document upload and summarization.
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from typing import Optional
+from pydantic import BaseModel
 
 from app.schemas import DocumentUploadResponse, DocumentStatusResponse
 from app.services.document_service import get_document_service
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
+
+
+class CitationHighlightRequest(BaseModel):
+    """Request model for citation highlighting."""
+    document_id: str
+    excerpt: str
+
+
+class CitationHighlightResponse(BaseModel):
+    """Response model for citation highlighting."""
+    found: bool
+    exactMatch: Optional[bool] = None
+    confidence: Optional[int] = None
+    documentContent: Optional[str] = None
+    highlightedSections: Optional[list] = None
+    error: Optional[str] = None
 
 
 @router.post("/upload", response_model=DocumentUploadResponse)
@@ -19,10 +36,11 @@ async def upload_document(file: UploadFile = File(...)):
     Supports PDF files (court orders, judgments, FIRs, legal notices).
     """
     # Validate file type
-    if not file.filename.lower().endswith('.pdf'):
+    allowed_extensions = ('.pdf', '.doc', '.docx', '.txt')
+    if not file.filename.lower().endswith(allowed_extensions):
         raise HTTPException(
             status_code=400, 
-            detail="Only PDF files are supported"
+            detail="Supported formats: PDF, DOC, DOCX, TXT"
         )
     
     # Check file size (10MB limit)
@@ -36,6 +54,36 @@ async def upload_document(file: UploadFile = File(...)):
     # Upload and process
     document_service = get_document_service()
     result = await document_service.upload_document(file_content, file.filename)
+    
+    return result
+
+
+@router.post("/highlight", response_model=CitationHighlightResponse)
+async def highlight_citation(request: CitationHighlightRequest):
+    """
+    Find and highlight a citation excerpt within an uploaded document.
+    Used for Advanced Trust & Verification feature.
+    """
+    document_service = get_document_service()
+    result = await document_service.find_citation_in_document(
+        request.document_id, 
+        request.excerpt
+    )
+    
+    return result
+
+
+@router.get("/coordinates/{document_id}")
+async def get_document_coordinates(document_id: str):
+    """
+    Extract text with word-level coordinates from a PDF document.
+    Enables precise highlighting in PDF viewers.
+    """
+    document_service = get_document_service()
+    result = await document_service.extract_text_with_coordinates(document_id)
+    
+    if "error" in result and not result.get("words"):
+        raise HTTPException(status_code=404, detail=result["error"])
     
     return result
 
