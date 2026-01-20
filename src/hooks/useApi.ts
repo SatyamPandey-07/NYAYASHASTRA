@@ -104,11 +104,13 @@ export function useChat(options: UseChatOptions = {}) {
                     }
                 }
 
-                // Add assistant message
+                // Add assistant message - use detected language to determine primary content
+                const detectedLang = response.detectedLanguage || 'en';
                 const assistantMessage: ChatMessage = {
                     id: (Date.now() + 1).toString(),
                     role: 'assistant',
-                    content: response.content || '',
+                    // If detected Hindi, show Hindi as primary content
+                    content: detectedLang === 'hi' && response.contentHi ? response.contentHi : (response.content || ''),
                     contentHindi: response.contentHi,
                     citations: response.citations as Citation[],
                     statutes: response.statutes as Statute[],
@@ -130,10 +132,13 @@ export function useChat(options: UseChatOptions = {}) {
                 const agents = ['query', 'statute', 'case', 'regulatory', 'citation', 'summary', 'response'];
                 setCompletedAgents(agents);
 
+                // Use detected language to determine primary content
+                const detectedLang = response.detectedLanguage || 'en';
                 const assistantMessage: ChatMessage = {
                     id: response.id,
                     role: 'assistant',
-                    content: response.content,
+                    // If detected Hindi, show Hindi as primary content
+                    content: detectedLang === 'hi' && response.contentHi ? response.contentHi : response.content,
                     contentHindi: response.contentHi,
                     citations: response.citations,
                     statutes: response.statutes,
