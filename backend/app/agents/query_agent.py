@@ -135,14 +135,52 @@ class QueryUnderstandingAgent(BaseAgent):
         return context
     
     def _detect_language(self, text: str) -> str:
-        """Detect if text is Hindi or English."""
-        # Check for Devanagari characters
-        hindi_chars = len(re.findall(r'[\u0900-\u097F]', text))
+        """Detect the language of the text using Unicode script detection.
+        Supports multiple Indian and international languages."""
+        
+        # Language detection based on Unicode character ranges
+        language_patterns = {
+            # Indian Languages
+            "hi": r'[\u0900-\u097F]',  # Devanagari (Hindi, Marathi, Sanskrit)
+            "ta": r'[\u0B80-\u0BFF]',  # Tamil
+            "te": r'[\u0C00-\u0C7F]',  # Telugu
+            "bn": r'[\u0980-\u09FF]',  # Bengali
+            "gu": r'[\u0A80-\u0AFF]',  # Gujarati
+            "kn": r'[\u0C80-\u0CFF]',  # Kannada
+            "ml": r'[\u0D00-\u0D7F]',  # Malayalam
+            "pa": r'[\u0A00-\u0A7F]',  # Punjabi (Gurmukhi)
+            "or": r'[\u0B00-\u0B7F]',  # Odia
+            "as": r'[\u0980-\u09FF]',  # Assamese (uses Bengali script)
+            # Other Languages
+            "ar": r'[\u0600-\u06FF]',  # Arabic
+            "ur": r'[\u0600-\u06FF]',  # Urdu (uses Arabic script)
+            "zh": r'[\u4E00-\u9FFF]',  # Chinese
+            "ja": r'[\u3040-\u30FF]',  # Japanese (Hiragana + Katakana)
+            "ko": r'[\uAC00-\uD7AF]',  # Korean
+            "th": r'[\u0E00-\u0E7F]',  # Thai
+            "ru": r'[\u0400-\u04FF]',  # Russian (Cyrillic)
+            "es": r'[áéíóúñ¿¡]',  # Spanish
+            "fr": r'[àâçéèêëïîôùûü]',  # French
+            "de": r'[äöüß]',  # German
+        }
+        
+        # Count characters for each language
+        char_counts = {}
+        for lang, pattern in language_patterns.items():
+            count = len(re.findall(pattern, text, re.IGNORECASE))
+            if count > 0:
+                char_counts[lang] = count
+        
+        # Count English characters
         english_chars = len(re.findall(r'[a-zA-Z]', text))
         
-        if hindi_chars > english_chars:
-            return "hi"
-        return "en"
+        # If any non-English language has more characters, use that language
+        if char_counts:
+            max_lang = max(char_counts, key=char_counts.get)
+            if char_counts[max_lang] > english_chars * 0.3:  # At least 30% of English chars
+                return max_lang
+        
+        return "en"  # Default to English
     
     def _extract_sections(self, text: str) -> List[str]:
         """Extract section numbers from query."""

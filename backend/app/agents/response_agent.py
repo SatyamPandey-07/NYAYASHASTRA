@@ -48,15 +48,16 @@ class ResponseSynthesisAgent(BaseAgent):
         else:
             response = self._generate_template_response(context)
         
-        context.response = response["en"]
-        context.response_hi = response["hi"]
+        # Use primary response (in detected language) as the main content
+        context.response = response.get("primary", response.get("en", ""))
+        context.response_hi = response.get("hi", "")
         
-        logger.info("Response synthesis completed")
+        logger.info(f"Response synthesis completed in language: {response.get('detected_language', 'en')}")
         
         return context
     
     async def _generate_llm_response(self, context: AgentContext) -> Dict[str, str]:
-        """Generate response using LLM in the detected language."""
+        """Generate response using LLM in the detected language (supports multiple languages)."""
         try:
             # Build context for LLM
             llm_context = self._build_llm_context(context)
@@ -64,7 +65,19 @@ class ResponseSynthesisAgent(BaseAgent):
             # Use detected_language (auto-detected from user input) for primary response
             response_language = context.detected_language or context.language or "en"
             
+            # Language names for better prompts
+            language_names = {
+                "en": "English", "hi": "Hindi", "ta": "Tamil", "te": "Telugu",
+                "bn": "Bengali", "gu": "Gujarati", "kn": "Kannada", "ml": "Malayalam",
+                "pa": "Punjabi", "or": "Odia", "as": "Assamese", "ar": "Arabic",
+                "ur": "Urdu", "zh": "Chinese", "ja": "Japanese", "ko": "Korean",
+                "th": "Thai", "ru": "Russian", "es": "Spanish", "fr": "French", "de": "German"
+            }
+            
+            lang_name = language_names.get(response_language, "English")
+            
             if response_language == "hi":
+                # Hindi prompt
                 prompt = f"""आप NyayGuru AI Pro हैं, भारतीय कानून के विशेषज्ञ कानूनी सहायक।
 उपयोगकर्ता के प्रश्न का व्यापक, सटीक और पेशेवर उत्तर हिंदी में दें।
 
@@ -84,11 +97,39 @@ class ResponseSynthesisAgent(BaseAgent):
 
 हिंदी में उत्तर दें:"""
                 
-                response_hi = await self.llm_service.generate(prompt)
-                # Generate English version for bilingual support
-                english_prompt = f"Translate this Hindi legal response to English, maintaining legal terminology accuracy:\n\n{response_hi}"
-                response_en = await self.llm_service.generate(english_prompt)
+                primary_response = await self.llm_service.generate(prompt)
+                # Generate English version for reference
+                english_prompt = f"Translate this Hindi legal response to English, maintaining legal terminology accuracy:\n\n{primary_response}"
+                secondary_response = await self.llm_service.generate(english_prompt)
+                
+            elif response_language != "en":
+                # Any other language - generate in that language
+                prompt = f"""You are NyayGuru AI Pro, an expert legal assistant for Indian law.
+Generate a comprehensive, accurate, and professional response to the user's query.
+IMPORTANT: Respond ONLY in {lang_name} language. The user asked in {lang_name}, so respond in {lang_name}.
+
+User Query: {context.query}
+Detected Domain: {context.detected_domain}
+
+{llm_context}
+
+Guidelines:
+1. Be accurate and cite specific sections and cases
+2. Explain in simple terms while maintaining legal precision
+3. Highlight key differences between IPC and BNS if relevant
+4. Mention landmark cases that establish important principles
+5. Include practical guidance where applicable
+6. Maintain a professional legal tone
+7. End with a disclaimer in {lang_name}
+
+Generate your complete response in {lang_name}:"""
+
+                primary_response = await self.llm_service.generate(prompt)
+                # Generate English version for reference
+                english_prompt = f"Translate this {lang_name} legal response to English, maintaining legal terminology accuracy:\n\n{primary_response}"
+                secondary_response = await self.llm_service.generate(english_prompt)
             else:
+                # English prompt (default)
                 prompt = f"""You are NyayGuru AI Pro, an expert legal assistant for Indian law. 
 Generate a comprehensive, accurate, and professional response to the user's query.
 
@@ -108,14 +149,15 @@ Guidelines:
 
 Generate response in English:"""
 
-                response_en = await self.llm_service.generate(prompt)
-                # Generate Hindi version for bilingual support
-                hindi_prompt = f"Translate this legal response to Hindi, maintaining legal terminology accuracy:\n\n{response_en}"
-                response_hi = await self.llm_service.generate(hindi_prompt)
+                primary_response = await self.llm_service.generate(prompt)
+                secondary_response = primary_response  # Same for English
             
+            # Return both versions - primary is in detected language
             return {
-                "en": response_en + DISCLAIMER_EN,
-                "hi": response_hi + DISCLAIMER_HI
+                "en": secondary_response + DISCLAIMER_EN if response_language != "en" else primary_response + DISCLAIMER_EN,
+                "hi": primary_response + DISCLAIMER_HI if response_language == "hi" else "",
+                "primary": primary_response,  # Primary response in detected language
+                "detected_language": response_language
             }
         except Exception as e:
             logger.error(f"LLM response generation failed: {e}")
