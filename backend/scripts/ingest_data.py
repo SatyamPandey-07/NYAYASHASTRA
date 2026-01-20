@@ -260,11 +260,42 @@ class LegalDataIngestionPipeline:
             "mappings": await self.ingest_ipc_bns_mappings()
         }
         
+        # Ingest PDF documents from legal_data folders
+        try:
+            pdf_count = await self.ingest_pdf_documents()
+            results["documents"] = pdf_count
+        except Exception as e:
+            logger.error(f"PDF ingestion failed: {e}")
+            results["documents"] = 0
+        
         duration = (datetime.now() - start_time).total_seconds()
         logger.info(f"Full ingestion completed in {duration:.2f}s")
         logger.info(f"Results: {results}")
         
         return results
+    
+    async def ingest_pdf_documents(self) -> int:
+        """Ingest PDF documents from legal_data subfolders with domain metadata."""
+        logger.info("Ingesting PDF documents...")
+        
+        try:
+            from app.services.pdf_ingestion import get_pdf_ingestion_service
+            
+            pdf_service = get_pdf_ingestion_service()
+            documents = pdf_service.ingest_all_documents()
+            
+            if documents and self.vector_store:
+                await self.vector_store.add_documents(documents)
+                logger.info(f"Added {len(documents)} PDF document chunks to vector store")
+                return len(documents)
+            
+            return 0
+        except ImportError as e:
+            logger.warning(f"PDF ingestion not available: {e}")
+            return 0
+        except Exception as e:
+            logger.error(f"Error ingesting PDFs: {e}")
+            return 0
     
     async def search(self, query: str, collection: str = "statutes", 
                     filters: Optional[Dict] = None, limit: int = 5) -> List[Dict]:
@@ -297,8 +328,10 @@ async def main():
     print(f"Statutes indexed: {results['statutes']}")
     print(f"Case laws indexed: {results['case_laws']}")
     print(f"Mappings indexed: {results['mappings']}")
+    print(f"PDF documents indexed: {results.get('documents', 0)}")
     print("="*50)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+

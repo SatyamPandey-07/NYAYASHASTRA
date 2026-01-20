@@ -32,6 +32,7 @@ class VectorStoreService:
         self.embedding_model = None
         self.statutes_collection = None
         self.cases_collection = None
+        self.documents_collection = None  # For PDF documents
         self._initialized = False
     
     async def initialize(self):
@@ -57,6 +58,12 @@ class VectorStoreService:
                 self.cases_collection = self.client.get_or_create_collection(
                     name="case_laws",
                     metadata={"description": "Court judgments and case laws"}
+                )
+                
+                # Documents collection for PDFs with domain metadata
+                self.documents_collection = self.client.get_or_create_collection(
+                    name="documents",
+                    metadata={"description": "PDF documents with domain categories"}
                 )
                 
                 logger.info("ChromaDB initialized successfully")
@@ -230,6 +237,109 @@ class VectorStoreService:
                 })
         
         return formatted
+    
+    async def add_documents(self, documents: List[Dict[str, Any]]):
+        """Add PDF documents to vector store with domain metadata.
+        
+        Args:
+            documents: List of document chunks with 'text' and metadata fields
+        """
+        if not self.documents_collection:
+            logger.warning("Vector store not initialized")
+            return
+        
+        texts = []
+        metadatas = []
+        ids = []
+        
+        for i, doc in enumerate(documents):
+            text = doc.get("text", "")
+            if not text:
+                continue
+            
+            texts.append(text)
+            
+            # Extract metadata
+            metadatas.append({
+                "filename": doc.get("filename", ""),
+                "category": doc.get("category", ""),  # Domain from folder
+                "domain": doc.get("domain", ""),
+                "folder": doc.get("folder", ""),
+                "source": doc.get("source", "pdf"),
+                "chunk_index": doc.get("chunk_index", 0),
+                "total_chunks": doc.get("total_chunks", 1),
+            })
+            
+            # Create unique ID
+            doc_id = f"doc_{doc.get('filename', 'unknown')}_{doc.get('chunk_index', i)}"
+            ids.append(doc_id)
+        
+        if not texts:
+            logger.warning("No documents to add")
+            return
+        
+        # Generate embeddings
+        embeddings = self.embed_texts(texts)
+        
+        # Add to collection
+        self.documents_collection.add(
+            documents=texts,
+            embeddings=embeddings,
+            metadatas=metadatas,
+            ids=ids
+        )
+        
+        logger.info(f"Added {len(texts)} document chunks to vector store")
+    
+    async def search_documents(self, query: str, domain: Optional[str] = None,
+                              category: Optional[str] = None, limit: int = 5) -> List[Dict[str, Any]]:
+        """Search for relevant document chunks with domain filtering.
+        
+        Args:
+            query: Search query
+            domain: Filter by domain (e.g., 'criminal', 'corporate')
+            category: Filter by category (same as domain)
+            limit: Max results to return
+            
+        Returns:
+            List of matching document chunks
+        """
+        if not self.documents_collection:
+            logger.warning("Vector store not initialized")
+            return []
+        
+        # Build where filter for domain
+        where_filter = None
+        filter_domain = domain or category
+        
+        if filter_domain and filter_domain.lower() not in ["all", ""]:
+            where_filter = {"domain": filter_domain.lower()}
+        
+        # Generate query embedding
+        query_embedding = self.embed_text(query)
+        
+        # Search with filter
+        results = self.documents_collection.query(
+            query_embeddings=[query_embedding],
+            n_results=limit,
+            where=where_filter
+        )
+        
+        # Format results
+        formatted = []
+        if results and results["ids"]:
+            for i, doc_id in enumerate(results["ids"][0]):
+                metadata = results["metadatas"][0][i] if results["metadatas"] else {}
+                formatted.append({
+                    "id": doc_id,
+                    "content": results["documents"][0][i] if results["documents"] else "",
+                    "distance": results["distances"][0][i] if results["distances"] else 0,
+                    "source": "document",
+                    **metadata
+                })
+        
+        logger.info(f"Document search returned {len(formatted)} results (domain filter: {filter_domain})")
+        return formatted
 
 
 # Singleton instance
@@ -243,3 +353,4 @@ async def get_vector_store() -> VectorStoreService:
         _vector_store = VectorStoreService()
         await _vector_store.initialize()
     return _vector_store
+

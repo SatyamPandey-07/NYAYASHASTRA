@@ -56,12 +56,20 @@ class StatuteRetrievalAgent(BaseAgent):
                         retrieved_statutes.append(statute)
                         logger.info(f"Retrieved {act_code} Section {section} from database")
         
-        # 2. Semantic search for additional relevant statutes
+        # 2. Semantic search for additional relevant statutes with domain filter
         if self.vector_store:
             query = context.reformulated_query or context.query
+            
+            # Get domain from context (specified or detected)
+            domain_filter = context.specified_domain if context.specified_domain and context.specified_domain != "all" else None
+            if not domain_filter and context.detected_domain:
+                domain_filter = context.detected_domain
+            
+            # Search statutes with domain filter
             semantic_results = await self.vector_store.search_statutes(
                 query=query,
                 act_codes=context.applicable_acts,
+                domain=domain_filter,
                 limit=5
             )
             
@@ -70,6 +78,24 @@ class StatuteRetrievalAgent(BaseAgent):
             for result in semantic_results:
                 if result.get("id") not in existing_ids:
                     retrieved_statutes.append(result)
+            
+            # Also search PDF documents with domain filter
+            doc_results = await self.vector_store.search_documents(
+                query=query,
+                domain=domain_filter,
+                limit=3
+            )
+            
+            # Add document results as context
+            for doc in doc_results:
+                if doc.get("id") not in existing_ids:
+                    retrieved_statutes.append({
+                        "id": doc.get("id"),
+                        "content_en": doc.get("content", ""),
+                        "source": "document",
+                        "domain": doc.get("domain", ""),
+                        "filename": doc.get("filename", "")
+                    })
         
         # 3. If no specific sections found, do keyword search in database
         if not retrieved_statutes:

@@ -59,18 +59,20 @@ class CaseLawAgent(BaseAgent):
                                 case_laws.append(c)
                         logger.info(f"Found {len(related_cases)} cases for section {section}")
         
-        # 2. Search by domain
-        if context.detected_domain and not case_laws:
+        # 2. Search by domain (use specified_domain if available)
+        search_domain = context.specified_domain if context.specified_domain and context.specified_domain != "all" else context.detected_domain
+        
+        if search_domain and not case_laws:
             domain_cases = await self.case_service.search_cases(
                 query=context.query,
-                domain=context.detected_domain,
+                domain=search_domain,
                 limit=3
             )
             case_laws.extend(domain_cases)
-            logger.info(f"Found {len(domain_cases)} cases for domain {context.detected_domain}")
+            logger.info(f"Found {len(domain_cases)} cases for domain {search_domain}")
         
         # 3. Get landmark cases if relevant
-        domain = context.detected_domain or "criminal"
+        domain = search_domain or "criminal"
         landmark_cases = await self.case_service.get_landmark_cases(
             domain=domain,
             limit=3
@@ -82,11 +84,12 @@ class CaseLawAgent(BaseAgent):
             if case.get("id") not in existing_ids:
                 case_laws.append(case)
         
-        # 4. Semantic search if vector store available
+        # 4. Semantic search if vector store available - with domain filter
         if self.vector_store:
             query = context.reformulated_query or context.query
             semantic_cases = await self.vector_store.search_cases(
                 query=query,
+                domain=search_domain if search_domain and search_domain != "all" else None,
                 limit=3
             )
             existing_ids = {c.get("id") for c in case_laws}
