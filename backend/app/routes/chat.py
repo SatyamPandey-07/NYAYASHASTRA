@@ -343,7 +343,10 @@ async def get_chat_history(
         return {"sessions": result}
         
     except Exception as e:
-        # Return empty list if database not available
+        # Log the actual error for debugging
+        import logging
+        logging.error(f"Error fetching chat history: {e}")
+        # Return empty list if database not available or any error
         return {"sessions": []}
 
 
