@@ -20,7 +20,9 @@ import {
   Upload,
   FileCheck,
   Eye,
+  Download,
 } from "lucide-react";
+import { jsPDF } from "jspdf";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { useChatHistory } from "@/hooks/useApi";
@@ -538,6 +540,87 @@ export const ChatInterface = ({
           )}
         </AnimatePresence>
 
+        {/* Export Chat Button */}
+        {messages.length > 0 && (
+          <div className="absolute top-4 right-4 z-40">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-background/50 backdrop-blur-sm border-primary/20 hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
+              onClick={() => {
+                const doc = new jsPDF();
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                let yPos = 20;
+
+                // Title
+                doc.setFontSize(20);
+                doc.setTextColor(44, 62, 80);
+                doc.text("NYAYASHASTRA Legal Chat Export", 20, yPos);
+                yPos += 10;
+
+                // Metadata
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`Date: ${new Date().toLocaleString()}`, 20, yPos);
+                yPos += 20;
+
+                // Content
+                messages.forEach((msg) => {
+                  // Check for page break
+                  if (yPos > pageHeight - 40) {
+                    doc.addPage();
+                    yPos = 20;
+                  }
+
+                  // Role Header
+                  doc.setFontSize(12);
+                  doc.setFont("helvetica", "bold");
+                  if (msg.role === "assistant") {
+                    doc.setTextColor(0, 51, 102); // Dark Blue for AI
+                    doc.text("NYAYASHASTRA AI", 20, yPos);
+                  } else {
+                    doc.setTextColor(44, 62, 80); // Dark Gray for User
+                    doc.text("USER", 20, yPos);
+                  }
+                  yPos += 7;
+
+                  // Message Body
+                  doc.setFontSize(11);
+                  doc.setFont("helvetica", "normal");
+                  doc.setTextColor(0, 0, 0);
+
+                  // Process text to fit width
+                  const content =
+                    msg.role === "assistant" &&
+                    language === "hi" &&
+                    msg.contentHindi
+                      ? msg.contentHindi
+                      : msg.content;
+                  const splitText = doc.splitTextToSize(
+                    content,
+                    pageWidth - 40,
+                  );
+
+                  // Check if text block needs page break
+                  if (yPos + splitText.length * 7 > pageHeight - 20) {
+                    doc.addPage();
+                    yPos = 20;
+                  }
+
+                  doc.text(splitText, 20, yPos);
+                  yPos += splitText.length * 7 + 10;
+                });
+
+                doc.save("nyayashastra-chat-export.pdf");
+              }}
+            >
+              <Download className="h-4 w-4" />
+              {language === "en" ? "Export PDF" : "PDF निर्यात करें"}
+            </Button>
+          </div>
+        )}
+
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6">
           {messages.length === 0 && (
@@ -704,7 +787,7 @@ export const ChatInterface = ({
                   </div>
 
                   {/* Citations with Interactive Viewer */}
-                  {message.citations && message.citations.length > 0 && (
+                  {message.citations && message.citations.length > 0 ? (
                     <div className="mt-4 pt-3 border-t border-border/40">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs text-muted-foreground font-medium">
@@ -738,6 +821,16 @@ export const ChatInterface = ({
                         ))}
                       </div>
                     </div>
+                  ) : (
+                    message.role === "assistant" && (
+                      <div className="mt-4 pt-3 border-t border-border/40">
+                        <p className="text-xs text-muted-foreground italic">
+                          {language === "en"
+                            ? "No citations available for this response"
+                            : "इस प्रतिक्रिया के लिए कोई उद्धरण उपलब्ध नहीं है"}
+                        </p>
+                      </div>
+                    )
                   )}
 
                   {/* User message timestamp */}

@@ -21,7 +21,7 @@ engine_args = {
 # PostgreSQL-specific settings
 if "postgresql" in settings.database_url:
     engine_args.update({
-        "pool_size": 5,
+        "pool_size": 10,
         "max_overflow": 10,
         "pool_timeout": 30,
         "pool_recycle": 1800,  # Recycle connections every 30 minutes

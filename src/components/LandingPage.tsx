@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
 import {
     Scale,
     Brain,
@@ -12,9 +12,9 @@ import {
     Building2,
     Gavel,
     BookOpen,
-    CheckCircle2,
     Quote,
-    ChevronRight
+    ChevronRight,
+    Play
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Link } from 'react-router-dom';
@@ -24,6 +24,38 @@ interface LandingPageProps {
     onStartChat: (query?: string) => void;
     onLanguageChange?: (lang: 'en' | 'hi') => void;
 }
+
+// Animated counter component
+const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?: number }) => {
+    const [count, setCount] = useState(0);
+    const ref = useRef<HTMLDivElement>(null);
+    const isInView = useInView(ref, { once: true });
+    const numericValue = parseInt(value.replace(/\D/g, '')) || 0;
+    const suffix = value.replace(/[0-9]/g, '');
+
+    useEffect(() => {
+        if (!isInView) return;
+
+        let startTime: number;
+        const animate = (timestamp: number) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.floor(easeOut * numericValue));
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        requestAnimationFrame(animate);
+    }, [isInView, numericValue, duration]);
+
+    return (
+        <div ref={ref} className="text-4xl md:text-5xl font-bold text-primary font-mono counter-animate">
+            {count}{suffix}
+        </div>
+    );
+};
 
 const stats = [
     { value: '500+', label: 'IPC Sections', labelHi: 'IPC धाराएं' },
@@ -37,43 +69,43 @@ const features = [
         icon: Brain,
         title: 'Multi-Agent AI',
         titleHi: 'मल्टी-एजेंट AI',
-        description: '7 specialized AI agents working in orchestration',
-        descriptionHi: '7 विशेषज्ञ AI एजेंट समन्वय में काम कर रहे हैं'
+        description: '7 specialized AI agents working in orchestration for comprehensive legal analysis',
+        descriptionHi: '7 विशेषज्ञ AI एजेंट व्यापक कानूनी विश्लेषण के लिए समन्वय में काम कर रहे हैं'
     },
     {
         icon: Scale,
         title: 'IPC ↔ BNS Mapping',
         titleHi: 'IPC ↔ BNS मैपिंग',
-        description: 'Automatic cross-referencing between old and new laws',
-        descriptionHi: 'पुराने और नए कानूनों के बीच स्वचालित क्रॉस-रेफ़रेंसिंग'
+        description: 'Automatic cross-referencing between old IPC and new BNS provisions',
+        descriptionHi: 'पुराने IPC और नए BNS प्रावधानों के बीच स्वचालित क्रॉस-रेफ़रेंसिंग'
     },
     {
         icon: Globe,
         title: 'Bilingual Support',
         titleHi: 'द्विभाषी समर्थन',
-        description: 'Full English and Hindi language support',
-        descriptionHi: 'पूर्ण अंग्रेजी और हिंदी भाषा समर्थन'
+        description: 'Seamless English and Hindi language support for wider accessibility',
+        descriptionHi: 'व्यापक पहुंच के लिए निर्बाध अंग्रेजी और हिंदी भाषा समर्थन'
     },
     {
         icon: Shield,
         title: 'Verified Citations',
         titleHi: 'सत्यापित उद्धरण',
-        description: 'Links only to official government sources',
-        descriptionHi: 'केवल आधिकारिक सरकारी स्रोतों के लिंक'
+        description: 'All citations link directly to official government gazette sources',
+        descriptionHi: 'सभी उद्धरण सीधे आधिकारिक सरकारी राजपत्र स्रोतों से जुड़ते हैं'
     },
     {
         icon: FileText,
         title: 'Document Analysis',
         titleHi: 'दस्तावेज़ विश्लेषण',
-        description: 'Upload and summarize court orders & judgments',
-        descriptionHi: 'कोर्ट आदेश और निर्णय अपलोड और सारांशित करें'
+        description: 'Upload court orders and judgments for AI-powered summarization',
+        descriptionHi: 'AI-संचालित सारांश के लिए कोर्ट आदेश और निर्णय अपलोड करें'
     },
     {
         icon: Gavel,
         title: 'Case Intelligence',
         titleHi: 'केस इंटेलिजेंस',
-        description: 'Supreme Court and High Court judgment retrieval',
-        descriptionHi: 'सुप्रीम कोर्ट और हाई कोर्ट के निर्णय'
+        description: 'Access Supreme Court and High Court judgments with smart search',
+        descriptionHi: 'स्मार्ट सर्च के साथ सुप्रीम कोर्ट और हाई कोर्ट के निर्णय तक पहुंचें'
     }
 ];
 
@@ -89,8 +121,8 @@ const socialImpact = [
         icon: Building2,
         title: 'Rural Empowerment',
         titleHi: 'ग्रामीण सशक्तिकरण',
-        description: 'Bridging the legal knowledge gap in rural India',
-        descriptionHi: 'ग्रामीण भारत में कानूनी ज्ञान की खाई को पाटना'
+        description: 'Bridging the legal knowledge gap in rural communities',
+        descriptionHi: 'ग्रामीण समुदायों में कानूनी ज्ञान की खाई को पाटना'
     },
     {
         icon: BookOpen,
@@ -102,10 +134,10 @@ const socialImpact = [
 ];
 
 const sampleQueries = [
-    'What is Section 302 IPC and its BNS equivalent?',
-    'Explain the Vishaka Guidelines',
-    'What are the punishments for cheating under Section 420?',
-    'धारा 376 में बलात्कार की सजा क्या है?'
+    { query: 'What is Section 302 IPC and its BNS equivalent?', isHindi: false },
+    { query: 'Explain the Vishaka Guidelines for workplace harassment', isHindi: false },
+    { query: 'What are the punishments for cheating under Section 420?', isHindi: false },
+    { query: 'धारा 376 में बलात्कार की सजा क्या है?', isHindi: true }
 ];
 
 export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguageChange }: LandingPageProps) => {
@@ -116,17 +148,31 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
         onLanguageChange?.(lang);
     };
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+    };
+
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen texture-noise">
             {/* Navbar */}
             <motion.header
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="glass-strong border-b border-border sticky top-0 z-50"
+                transition={{ duration: 0.5 }}
+                className="glass-strong border-b border-border/50 sticky top-0 z-50"
             >
                 <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                     {/* Logo */}
-                    <div className="flex items-center gap-3">
+                    <Link to="/" className="flex items-center gap-3 group">
                         <motion.div
                             whileHover={{ scale: 1.05 }}
                             className="flex items-center gap-2"
@@ -135,31 +181,29 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
                                 <img 
                                     src="/national-emblem.png" 
                                     alt="NYAYASHASTRA Logo" 
-                                    className="h-10 w-10 object-contain"
-                                />
-                                <motion.div
-                                    className="absolute inset-0 bg-primary/20 blur-lg rounded-full -z-10"
-                                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.3, 0.5] }}
-                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="h-10 w-10 object-contain transition-transform group-hover:scale-105"
                                 />
                             </div>
                             <div className="hidden sm:block">
-                                <h1 className="text-xl font-serif font-bold tracking-wide text-primary">NYAYASHASTRA</h1>
-                                <p className="text-xs text-muted-foreground -mt-1 font-serif italic">
+                                <h1 className="text-xl font-serif font-bold tracking-wide">
+                                    <span className="text-foreground">NYAYA</span>
+                                    <span className="text-primary">SHASTRA</span>
+                                </h1>
+                                <p className="text-xs text-muted-foreground -mt-0.5 font-sans">
                                     {language === 'en' ? "India's Legal Intelligence" : 'भारत की कानूनी बुद्धिमत्ता'}
                                 </p>
                             </div>
                         </motion.div>
-                    </div>
+                    </Link>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         {/* Language Toggle */}
-                        <div className="flex items-center gap-1 glass rounded-full p-1">
+                        <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1">
                             <Button
                                 variant={language === 'en' ? 'default' : 'ghost'}
                                 size="sm"
-                                className="h-7 px-3 rounded-full text-xs"
+                                className="h-7 px-3 rounded-full text-xs font-medium"
                                 onClick={() => handleLanguageChange('en')}
                             >
                                 <Globe className="h-3 w-3 mr-1" />
@@ -168,7 +212,7 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
                             <Button
                                 variant={language === 'hi' ? 'default' : 'ghost'}
                                 size="sm"
-                                className="h-7 px-3 rounded-full text-xs text-hindi"
+                                className="h-7 px-3 rounded-full text-xs text-hindi font-medium"
                                 onClick={() => handleLanguageChange('hi')}
                             >
                                 हि
@@ -177,7 +221,7 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
 
                         {/* Sign In Button */}
                         <Link to="/sign-in">
-                            <Button size="sm" className="rounded-full px-6 gap-2">
+                            <Button size="sm" className="rounded-full px-5 gap-2 btn-shimmer">
                                 {language === 'en' ? 'Sign In' : 'साइन इन'}
                                 <ArrowRight className="h-4 w-4" />
                             </Button>
@@ -187,10 +231,9 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
             </motion.header>
 
             {/* Hero Section */}
-            <section className="relative py-20 px-4 overflow-hidden">
-                {/* Background Effects */}
-                <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-[0.03] pointer-events-none z-0">
+            <section className="relative py-24 md:py-32 px-4 overflow-hidden hero-pattern">
+                {/* Background Emblem */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] opacity-[0.03] pointer-events-none">
                     <img 
                         src="/national-emblem.png" 
                         alt="" 
@@ -198,62 +241,84 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
                     />
                 </div>
 
-                <div className="container mx-auto max-w-6xl relative z-10">
+                <div className="container mx-auto max-w-5xl relative z-10">
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
+                        initial="hidden"
+                        animate="visible"
+                        variants={containerVariants}
                         className="text-center"
                     >
                         {/* Badge */}
                         <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8"
+                            variants={itemVariants}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8"
                         >
                             <Sparkles className="h-4 w-4 text-primary" />
-                            <span className="text-sm font-medium">
+                            <span className="text-sm font-medium text-primary">
                                 {language === 'en' ? "India's First AI Legal Assistant" : "भारत का पहला AI कानूनी सहायक"}
                             </span>
                         </motion.div>
 
+                        {/* Logo */}
                         <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            className="flex justify-center mb-6"
+                            variants={itemVariants}
+                            className="flex justify-center mb-8"
                         >
-                            <img 
-                                src="/national-emblem.png" 
-                                alt="NYAYASHASTRA Logo" 
-                                className="h-32 w-32 object-contain"
-                            />
+                            <div className="relative">
+                                <img
+                                    src="/national-emblem.png"
+                                    alt="NYAYASHASTRA Logo" 
+                                    className="h-28 w-28 md:h-36 md:w-36 object-contain"
+                                />
+                                <motion.div
+                                    className="absolute inset-0 rounded-full opacity-30"
+                                    animate={{
+                                        boxShadow: [
+                                            '0 0 20px hsl(28 70% 45% / 0.3)',
+                                            '0 0 40px hsl(28 70% 45% / 0.5)',
+                                            '0 0 20px hsl(28 70% 45% / 0.3)'
+                                        ]
+                                    }}
+                                    transition={{ duration: 3, repeat: Infinity }}
+                                />
+                            </div>
                         </motion.div>
 
-
                         {/* Main Title */}
-                        <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 tracking-tight text-foreground">
-                            NYAYA<span className="text-primary">SHASTRA</span>
-                        </h1>
+                        <motion.h1
+                            variants={itemVariants}
+                            className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold mb-6 tracking-tight"
+                        >
+                            <span className="text-foreground">NYAYA</span>
+                            <span className="gradient-text-gold">SHASTRA</span>
+                        </motion.h1>
 
-                        <p className="text-xl md:text-2xl text-muted-foreground mb-4 max-w-3xl mx-auto font-serif italic">
+                        <motion.p
+                            variants={itemVariants}
+                            className="text-xl md:text-2xl text-muted-foreground mb-3 max-w-3xl mx-auto font-serif italic"
+                        >
                             {language === 'en'
                                 ? 'AI-Powered Legal Helper for India'
                                 : 'भारत के लिए AI-संचालित कानूनी सहायक'}
-                        </p>
+                        </motion.p>
 
-                        <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+                        <motion.p
+                            variants={itemVariants}
+                            className="text-base md:text-lg text-muted-foreground mb-10 max-w-2xl mx-auto"
+                        >
                             {language === 'en'
-                                ? 'Get instant, accurate, and bilingual answers about IPC, BNS, and Indian law with verified citations.'
-                                : 'IPC, BNS और भारतीय कानून के बारे में सत्यापित उद्धरणों के साथ तत्काल, सटीक और द्विभाषी उत्तर प्राप्त करें।'}
-                        </p>
+                                ? 'Get instant, accurate, and bilingual answers about IPC, BNS, and Indian law with verified citations from official sources.'
+                                : 'आधिकारिक स्रोतों से सत्यापित उद्धरणों के साथ IPC, BNS और भारतीय कानून के बारे में तत्काल, सटीक और द्विभाषी उत्तर प्राप्त करें।'}
+                        </motion.p>
 
                         {/* CTA Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                        <motion.div
+                            variants={itemVariants}
+                            className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
+                        >
                             <Button
                                 size="lg"
-                                className="glow-primary text-lg px-8 py-6"
+                                className="text-lg px-8 py-6 rounded-xl glow-primary btn-shimmer"
                                 onClick={() => onStartChat()}
                             >
                                 {language === 'en' ? 'Start Legal Query' : 'कानूनी प्रश्न शुरू करें'}
@@ -262,48 +327,55 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
                             <Button
                                 size="lg"
                                 variant="outline"
-                                className="text-lg px-8 py-6"
+                                className="text-lg px-8 py-6 rounded-xl group"
                             >
+                                <Play className="mr-2 h-5 w-5 group-hover:text-primary transition-colors" />
                                 {language === 'en' ? 'Watch Demo' : 'डेमो देखें'}
                             </Button>
-                        </div>
+                        </motion.div>
 
                         {/* Stats */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                        <motion.div
+                            variants={itemVariants}
+                            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto"
+                        >
                             {stats.map((stat, idx) => (
                                 <motion.div
                                     key={idx}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.4 + idx * 0.1 }}
-                                    className="legal-card rounded-md p-4 text-center"
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.5 + idx * 0.1 }}
+                                    className="stat-card rounded-xl p-5 text-center"
                                 >
-                                    <div className="text-3xl font-bold text-primary font-mono">{stat.value}</div>
-                                    <div className="text-sm text-muted-foreground font-serif">
+                                    <AnimatedCounter value={stat.value} />
+                                    <div className="text-sm text-muted-foreground mt-1 font-medium">
                                         {language === 'hi' ? stat.labelHi : stat.label}
                                     </div>
                                 </motion.div>
                             ))}
-                        </div>
+                        </motion.div>
                     </motion.div>
                 </div>
             </section>
 
-            <div className="container max-w-4xl mx-auto"><div className="double-divider" /></div>
+            {/* Divider */}
+            <div className="container max-w-4xl mx-auto px-4">
+                <div className="double-divider" />
+            </div>
 
             {/* Features Section */}
-            <section className="py-20 px-4">
+            <section className="py-20 md:py-24 px-4">
                 <div className="container mx-auto max-w-6xl">
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-center mb-12"
+                        className="text-center mb-14"
                     >
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
                             {language === 'en' ? 'Powerful Features' : 'शक्तिशाली विशेषताएं'}
                         </h2>
-                        <p className="text-muted-foreground max-w-2xl mx-auto">
+                        <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
                             {language === 'en'
                                 ? 'Built with cutting-edge AI technology for accurate legal assistance'
                                 : 'सटीक कानूनी सहायता के लिए अत्याधुनिक AI तकनीक के साथ निर्मित'}
@@ -317,13 +389,13 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
                                 initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ delay: idx * 0.1 }}
-                                className="legal-card rounded-md p-6 hover:border-primary/50 transition-all duration-300 group"
+                                transition={{ delay: idx * 0.08 }}
+                                className="feature-card p-6 group cursor-default"
                             >
-                                <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4 group-hover:bg-primary/20 transition-colors">
+                                <div className="icon-container w-fit mb-5">
                                     <feature.icon className="h-6 w-6 text-primary" />
                                 </div>
-                                <h3 className="text-lg font-serif font-semibold mb-2">
+                                <h3 className="text-lg font-serif font-semibold mb-2 group-hover:text-primary transition-colors">
                                     {language === 'hi' ? feature.titleHi : feature.title}
                                 </h3>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
@@ -335,41 +407,44 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
                 </div>
             </section>
 
-            <div className="container max-w-4xl mx-auto"><div className="double-divider" /></div>
+            {/* Divider */}
+            <div className="container max-w-4xl mx-auto px-4">
+                <div className="double-divider" />
+            </div>
 
             {/* Social Impact Section */}
-            <section className="py-20 px-4">
+            <section className="py-20 md:py-24 px-4">
                 <div className="container mx-auto max-w-6xl">
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-center mb-12"
+                        className="text-center mb-14"
                     >
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4 font-serif">
+                        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 font-serif">
                             {language === 'en' ? 'Social Impact' : 'सामाजिक प्रभाव'}
                         </h2>
-                        <p className="text-muted-foreground max-w-2xl mx-auto">
+                        <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
                             {language === 'en'
                                 ? 'Democratizing access to legal knowledge across India'
                                 : 'पूरे भारत में कानूनी ज्ञान तक पहुंच का लोकतंत्रीकरण'}
                         </p>
                     </motion.div>
 
-                    <div className="grid md:grid-cols-3 gap-8 mb-12">
+                    <div className="grid md:grid-cols-3 gap-8 mb-14">
                         {socialImpact.map((item, idx) => (
                             <motion.div
                                 key={idx}
-                                initial={{ opacity: 0, scale: 0.9 }}
+                                initial={{ opacity: 0, scale: 0.95 }}
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
-                                transition={{ delay: idx * 0.15 }}
-                                className="text-center p-8 rounded-2xl glass-strong"
+                                transition={{ delay: idx * 0.12 }}
+                                className="text-center p-8 rounded-2xl card-elevated"
                             >
-                                <div className="p-4 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 w-fit mx-auto mb-4">
+                                <div className="icon-container w-fit mx-auto mb-5">
                                     <item.icon className="h-8 w-8 text-primary" />
                                 </div>
-                                <h3 className="text-xl font-semibold mb-2">
+                                <h3 className="text-xl font-semibold mb-3">
                                     {language === 'hi' ? item.titleHi : item.title}
                                 </h3>
                                 <p className="text-muted-foreground">
@@ -384,10 +459,10 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="glass-strong rounded-2xl p-8 text-center max-w-3xl mx-auto"
+                        className="card-elevated rounded-2xl p-8 md:p-10 text-center max-w-3xl mx-auto"
                     >
-                        <Quote className="h-8 w-8 text-primary mx-auto mb-4" />
-                        <blockquote className="text-lg md:text-xl italic text-foreground mb-4">
+                        <Quote className="h-10 w-10 text-primary/40 mx-auto mb-5" />
+                        <blockquote className="text-xl md:text-2xl italic text-foreground mb-4 font-serif">
                             {language === 'en'
                                 ? '"Justice delayed is justice denied. NYAYASHASTRA brings instant legal clarity to every Indian citizen."'
                                 : '"न्याय में देरी न्याय से वंचित करना है। NYAYASHASTRA हर भारतीय नागरिक के लिए तत्काल कानूनी स्पष्टता लाता है।"'}
@@ -397,39 +472,39 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
             </section>
 
             {/* Try It Section */}
-            <section className="py-20 px-4 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
+            <section className="py-20 md:py-24 px-4 bg-muted/30">
                 <div className="container mx-auto max-w-4xl">
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-center mb-8"
+                        className="text-center mb-10"
                     >
                         <h2 className="text-3xl md:text-4xl font-bold mb-4">
                             {language === 'en' ? 'Try It Now' : 'अभी प्रयास करें'}
                         </h2>
-                        <p className="text-muted-foreground">
+                        <p className="text-muted-foreground text-lg">
                             {language === 'en'
-                                ? 'Click on any question to get started'
-                                : 'शुरू करने के लिए किसी भी प्रश्न पर क्लिक करें'}
+                                ? 'Click on any question to get started instantly'
+                                : 'तुरंत शुरू करने के लिए किसी भी प्रश्न पर क्लिक करें'}
                         </p>
                     </motion.div>
 
                     <div className="grid gap-3">
-                        {sampleQueries.map((query, idx) => (
+                        {sampleQueries.map((item, idx) => (
                             <motion.button
                                 key={idx}
                                 initial={{ opacity: 0, x: -20 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ delay: idx * 0.1 }}
-                                onClick={() => onStartChat(query)}
-                                className="w-full text-left p-4 glass rounded-xl hover:border-primary/50 transition-all duration-300 group flex items-center justify-between"
+                                transition={{ delay: idx * 0.08 }}
+                                onClick={() => onStartChat(item.query)}
+                                className="query-button group"
                             >
-                                <span className="text-foreground group-hover:text-primary transition-colors">
-                                    {query}
+                                <span className={`text-foreground group-hover:text-primary transition-colors ${item.isHindi ? 'text-hindi' : ''}`}>
+                                    {item.query}
                                 </span>
-                                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                             </motion.button>
                         ))}
                     </div>
@@ -437,16 +512,33 @@ export const LandingPage = ({ language: initialLanguage, onStartChat, onLanguage
             </section>
 
             {/* Footer */}
-            <footer className="py-8 px-4 border-t border-border">
-                <div className="container mx-auto max-w-6xl text-center">
-                    <p className="text-sm text-muted-foreground mb-2">
-                        {language === 'en'
-                            ? '⚖️ This tool is for informational purposes only and does not constitute legal advice.'
-                            : '⚖️ यह उपकरण केवल सूचनात्मक उद्देश्यों के लिए है और कानूनी सलाह नहीं है।'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                        © 2024 NYAYASHASTRA. {language === 'en' ? 'All rights reserved.' : 'सर्वाधिकार सुरक्षित।'}
-                    </p>
+            <footer className="py-10 px-4 border-t border-border bg-card/50">
+                <div className="container mx-auto max-w-6xl">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                        {/* Logo */}
+                        <div className="flex items-center gap-2">
+                            <img
+                                src="/national-emblem.png"
+                                alt="NYAYASHASTRA"
+                                className="h-8 w-8 object-contain opacity-60"
+                            />
+                            <span className="text-sm font-serif font-semibold text-muted-foreground">
+                                NYAYASHASTRA
+                            </span>
+                        </div>
+
+                        {/* Disclaimer */}
+                        <p className="text-sm text-muted-foreground text-center">
+                            {language === 'en'
+                                ? '⚖️ This tool is for informational purposes only and does not constitute legal advice.'
+                                : '⚖️ यह उपकरण केवल सूचनात्मक उद्देश्यों के लिए है और कानूनी सलाह नहीं है।'}
+                        </p>
+
+                        {/* Copyright */}
+                        <p className="text-xs text-muted-foreground">
+                            © 2024 NYAYASHASTRA
+                        </p>
+                    </div>
                 </div>
             </footer>
         </div>

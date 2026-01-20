@@ -65,8 +65,11 @@ class CitationAgent(BaseAgent):
         citations = []
         citation_id = 1
         
+        logger.info(f"CitationAgent: Processing {len(context.statutes)} statutes, {len(context.case_laws)} case_laws")
+        
         # 1. Generate citations for statutes
         for statute in context.statutes:
+            logger.info(f"CitationAgent: Creating citation for statute: {statute.get('section_number', 'unknown')}")
             citation = self._create_statute_citation(statute, citation_id)
             if citation:
                 citations.append(citation)
@@ -74,6 +77,7 @@ class CitationAgent(BaseAgent):
         
         # 2. Generate citations for case laws
         for case in context.case_laws:
+            logger.info(f"CitationAgent: Creating citation for case: {case.get('case_name', 'unknown')}")
             citation = self._create_case_citation(case, citation_id)
             if citation:
                 citations.append(citation)

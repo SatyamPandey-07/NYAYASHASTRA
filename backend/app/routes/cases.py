@@ -43,7 +43,7 @@ def caselaw_to_dict(case: CaseLaw) -> dict:
 
 
 @router.get("/", response_model=List[dict])
-async def get_cases(
+def get_cases(
     court: Optional[str] = Query(None, description="Filter by court"),
     domain: Optional[str] = Query(None, description="Filter by domain"),
     landmark_only: bool = Query(False, description="Only landmark cases"),
@@ -68,7 +68,7 @@ async def get_cases(
 
 
 @router.get("/search")
-async def search_cases(
+def search_cases(
     query: str = Query(..., description="Search query"),
     court: Optional[str] = Query(None),
     domain: Optional[str] = Query(None),
@@ -105,7 +105,7 @@ async def search_cases(
 
 
 @router.get("/landmark")
-async def get_landmark_cases(
+def get_landmark_cases(
     domain: Optional[str] = Query(None),
     limit: int = Query(10, le=50),
     db: Session = Depends(get_db)
@@ -126,7 +126,7 @@ async def get_landmark_cases(
 
 
 @router.get("/by-section/{section_number}")
-async def get_cases_by_section(
+def get_cases_by_section(
     section_number: str,
     db: Session = Depends(get_db)
 ):
@@ -159,7 +159,7 @@ async def get_cases_by_section(
 
 
 @router.get("/{case_id}")
-async def get_case(
+def get_case(
     case_id: str,
     db: Session = Depends(get_db)
 ):

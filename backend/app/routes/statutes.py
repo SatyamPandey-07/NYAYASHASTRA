@@ -68,7 +68,7 @@ def mapping_to_dict(mapping: IPCBNSMapping) -> dict:
 
 
 @router.get("/", response_model=List[dict])
-async def get_statutes(
+def get_statutes(
     act_code: Optional[str] = Query(None, description="Filter by act code (IPC, BNS)"),
     domain: Optional[str] = Query(None, description="Filter by domain (criminal, civil)"),
     limit: int = Query(20, le=100, description="Maximum results"),
@@ -92,7 +92,7 @@ async def get_statutes(
 
 
 @router.get("/search")
-async def search_statutes(
+def search_statutes(
     query: str = Query(..., description="Search query"),
     act_codes: Optional[str] = Query(None, description="Comma-separated act codes"),
     domain: Optional[str] = Query(None, description="Legal domain"),
@@ -135,7 +135,7 @@ async def search_statutes(
 
 
 @router.get("/section/{section_number}")
-async def get_section(
+def get_section(
     section_number: str,
     act_code: str = Query("IPC", description="Act code"),
     db: Session = Depends(get_db)
@@ -155,14 +155,23 @@ async def get_section(
     return statute_to_dict(statute)
 
 
+# In-memory cache for full comparison list
+_comparison_cache = None
+
 @router.get("/comparison")
-async def get_ipc_bns_comparison(
+def get_ipc_bns_comparison(
     ipc_section: Optional[str] = Query(None, description="IPC section number"),
     bns_section: Optional[str] = Query(None, description="BNS section number"),
     search_query: Optional[str] = Query(None, description="Search in comparisons"),
     db: Session = Depends(get_db)
 ):
     """Get IPC to BNS section comparisons from database."""
+    global _comparison_cache
+    
+    # Return cached result for full list request
+    if not ipc_section and not bns_section and not search_query and _comparison_cache:
+        return _comparison_cache
+
     try:
         query = db.query(IPCBNSMapping).options(
             joinedload(IPCBNSMapping.ipc_section),
@@ -201,10 +210,16 @@ async def get_ipc_bns_comparison(
                     filtered_mappings.append(m)
             mappings = filtered_mappings
         
-        return {
+        result = {
             "comparisons": [mapping_to_dict(m) for m in mappings if m.ipc_section and m.bns_section],
             "total": len(mappings)
         }
+        
+        # Update cache if this was a full list request
+        if not ipc_section and not bns_section and not search_query:
+            _comparison_cache = result
+            
+        return result
     except Exception as e:
         # Return empty data instead of error
         import logging
@@ -216,7 +231,7 @@ async def get_ipc_bns_comparison(
 
 
 @router.get("/comparison/{ipc_section}")
-async def get_specific_comparison(
+def get_specific_comparison(
     ipc_section: str,
     db: Session = Depends(get_db)
 ):

@@ -42,12 +42,10 @@ class VectorStoreService:
         
         try:
             if CHROMA_AVAILABLE:
-                # Initialize ChromaDB
-                self.client = chromadb.Client(Settings(
-                    chroma_db_impl="duckdb+parquet",
-                    persist_directory=settings.chroma_persist_dir,
-                    anonymized_telemetry=False
-                ))
+                # Initialize ChromaDB with new API
+                self.client = chromadb.PersistentClient(
+                    path=settings.chroma_persist_dir
+                )
                 
                 # Get or create collections
                 self.statutes_collection = self.client.get_or_create_collection(

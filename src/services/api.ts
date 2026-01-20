@@ -3,12 +3,12 @@
  * Handles all API communication with the backend.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Types
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   contentHindi?: string;
   citations?: Citation[];
@@ -23,7 +23,12 @@ export interface Citation {
   id: string;
   title: string;
   titleHi?: string;
-  source: 'gazette' | 'supreme_court' | 'high_court' | 'law_commission' | 'indiankanoon';
+  source:
+    | "gazette"
+    | "supreme_court"
+    | "high_court"
+    | "law_commission"
+    | "indiankanoon";
   sourceName?: string;
   url: string;
   excerpt?: string;
@@ -86,7 +91,7 @@ export interface IPCBNSMapping {
 
 export interface AgentStep {
   agent: string;
-  status: 'pending' | 'processing' | 'completed' | 'error';
+  status: "pending" | "processing" | "completed" | "error";
   startedAt?: string;
   completedAt?: string;
   resultSummary?: string;
@@ -128,7 +133,13 @@ export interface DocumentUploadResponse {
 export interface DocumentStatus {
   documentId: string;
   filename: string;
-  status: 'pending' | 'extracting' | 'analyzing' | 'summarizing' | 'completed' | 'error';
+  status:
+    | "pending"
+    | "extracting"
+    | "analyzing"
+    | "summarizing"
+    | "completed"
+    | "error";
   progress: number;
   summary?: {
     keyArguments: string[];
@@ -148,21 +159,21 @@ export interface DocumentStatus {
  */
 export async function sendChatMessage(
   content: string,
-  language: 'en' | 'hi' = 'en',
+  language: "en" | "hi" = "en",
   sessionId?: string,
   token?: string,
-  domain?: string
+  domain?: string,
 ): Promise<ChatResponse> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_BASE_URL}/api/chat/`, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify({
       content,
@@ -185,21 +196,21 @@ export async function sendChatMessage(
  */
 export async function* sendChatMessageStreaming(
   content: string,
-  language: 'en' | 'hi' = 'en',
+  language: "en" | "hi" = "en",
   sessionId?: string,
   token?: string,
-  domain?: string
+  domain?: string,
 ): AsyncGenerator<{ type: string; data: any }> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify({
       content,
@@ -214,26 +225,26 @@ export async function* sendChatMessageStreaming(
   }
 
   const reader = response.body?.getReader();
-  if (!reader) throw new Error('No response body');
+  if (!reader) throw new Error("No response body");
 
   const decoder = new TextDecoder();
-  let buffer = '';
+  let buffer = "";
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
 
     for (const line of lines) {
-      if (line.startsWith('data: ')) {
+      if (line.startsWith("data: ")) {
         try {
           const data = JSON.parse(line.slice(6));
           yield data;
         } catch (e) {
-          console.error('Failed to parse SSE data:', e);
+          console.error("Failed to parse SSE data:", e);
         }
       }
     }
@@ -246,12 +257,12 @@ export async function* sendChatMessageStreaming(
 export async function getStatutes(
   actCode?: string,
   domain?: string,
-  limit: number = 20
+  limit: number = 20,
 ): Promise<Statute[]> {
   const params = new URLSearchParams();
-  if (actCode) params.append('act_code', actCode);
-  if (domain) params.append('domain', domain);
-  params.append('limit', String(limit));
+  if (actCode) params.append("act_code", actCode);
+  if (domain) params.append("domain", domain);
+  params.append("limit", String(limit));
 
   const response = await fetch(`${API_BASE_URL}/api/statutes/?${params}`);
   if (!response.ok) throw new Error(`API error: ${response.statusText}`);
@@ -267,11 +278,11 @@ export async function searchStatutes(
   query: string,
   actCodes?: string[],
   domain?: string,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<{ results: Statute[]; total: number }> {
   const params = new URLSearchParams({ query, limit: String(limit) });
-  if (actCodes) params.append('act_codes', actCodes.join(','));
-  if (domain) params.append('domain', domain);
+  if (actCodes) params.append("act_codes", actCodes.join(","));
+  if (domain) params.append("domain", domain);
 
   const response = await fetch(`${API_BASE_URL}/api/statutes/search?${params}`);
   if (!response.ok) throw new Error(`API error: ${response.statusText}`);
@@ -286,9 +297,12 @@ export async function searchStatutes(
 /**
  * Get a specific section
  */
-export async function getSection(sectionNumber: string, actCode: string = 'IPC'): Promise<Statute> {
+export async function getSection(
+  sectionNumber: string,
+  actCode: string = "IPC",
+): Promise<Statute> {
   const response = await fetch(
-    `${API_BASE_URL}/api/statutes/section/${sectionNumber}?act_code=${actCode}`
+    `${API_BASE_URL}/api/statutes/section/${sectionNumber}?act_code=${actCode}`,
   );
   if (!response.ok) throw new Error(`API error: ${response.statusText}`);
 
@@ -302,14 +316,16 @@ export async function getSection(sectionNumber: string, actCode: string = 'IPC')
 export async function getIPCBNSComparisons(
   ipcSection?: string,
   bnsSection?: string,
-  searchQuery?: string
+  searchQuery?: string,
 ): Promise<{ comparisons: IPCBNSMapping[]; total: number }> {
   const params = new URLSearchParams();
-  if (ipcSection) params.append('ipc_section', ipcSection);
-  if (bnsSection) params.append('bns_section', bnsSection);
-  if (searchQuery) params.append('search_query', searchQuery);
+  if (ipcSection) params.append("ipc_section", ipcSection);
+  if (bnsSection) params.append("bns_section", bnsSection);
+  if (searchQuery) params.append("search_query", searchQuery);
 
-  const response = await fetch(`${API_BASE_URL}/api/statutes/comparison?${params}`);
+  const response = await fetch(
+    `${API_BASE_URL}/api/statutes/comparison?${params}`,
+  );
   if (!response.ok) throw new Error(`API error: ${response.statusText}`);
 
   const data = await response.json();
@@ -322,12 +338,14 @@ export async function getIPCBNSComparisons(
 /**
  * Upload a document for analysis
  */
-export async function uploadDocument(file: File): Promise<DocumentUploadResponse> {
+export async function uploadDocument(
+  file: File,
+): Promise<DocumentUploadResponse> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
 
   const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
-    method: 'POST',
+    method: "POST",
     body: formData,
   });
 
@@ -345,8 +363,12 @@ export async function uploadDocument(file: File): Promise<DocumentUploadResponse
 /**
  * Get document status
  */
-export async function getDocumentStatus(documentId: string): Promise<DocumentStatus> {
-  const response = await fetch(`${API_BASE_URL}/api/documents/status/${documentId}`);
+export async function getDocumentStatus(
+  documentId: string,
+): Promise<DocumentStatus> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/documents/status/${documentId}`,
+  );
   if (!response.ok) throw new Error(`API error: ${response.statusText}`);
 
   const data = await response.json();
@@ -355,14 +377,16 @@ export async function getDocumentStatus(documentId: string): Promise<DocumentSta
     filename: data.filename,
     status: data.status,
     progress: data.progress,
-    summary: data.summary ? {
-      keyArguments: data.summary.key_arguments || [],
-      verdict: data.summary.verdict,
-      citedSections: data.summary.cited_sections || [],
-      parties: data.summary.parties,
-      courtName: data.summary.court_name,
-      date: data.summary.date,
-    } : undefined,
+    summary: data.summary
+      ? {
+          keyArguments: data.summary.key_arguments || [],
+          verdict: data.summary.verdict,
+          citedSections: data.summary.cited_sections || [],
+          parties: data.summary.parties,
+          courtName: data.summary.court_name,
+          date: data.summary.date,
+        }
+      : undefined,
     errorMessage: data.error_message,
   };
 }
@@ -388,7 +412,10 @@ export async function getAgents(): Promise<AgentInfo[]> {
 /**
  * Health check
  */
-export async function healthCheck(): Promise<{ status: string; version: string }> {
+export async function healthCheck(): Promise<{
+  status: string;
+  version: string;
+}> {
   const response = await fetch(`${API_BASE_URL}/health`);
   if (!response.ok) throw new Error(`API error: ${response.statusText}`);
   return response.json();
@@ -400,12 +427,12 @@ export async function healthCheck(): Promise<{ status: string; version: string }
  */
 export async function warmUpDatabase(): Promise<void> {
   try {
-    await fetch(`${API_BASE_URL}/health`, { method: 'GET' });
+    await fetch(`${API_BASE_URL}/health`, { method: "GET" });
     // Also ping the statutes endpoint to warm up the DB connection
-    await fetch(`${API_BASE_URL}/api/statutes/?limit=1`, { method: 'GET' });
+    await fetch(`${API_BASE_URL}/api/statutes/?limit=1`, { method: "GET" });
   } catch (e) {
     // Silently fail - this is just a warmup
-    console.log('Database warmup in progress...');
+    console.log("Database warmup in progress...");
   }
 }
 
@@ -428,20 +455,23 @@ export interface ChatHistoryResponse {
  */
 export async function getChatHistory(
   limit: number = 20,
-  token?: string
+  token?: string,
 ): Promise<ChatHistoryResponse> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/chat/history?limit=${limit}`, {
-    method: 'GET',
-    headers,
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/api/chat/history?limit=${limit}`,
+    {
+      method: "GET",
+      headers,
+    },
+  );
 
   if (!response.ok) {
     throw new Error(`API error: ${response.statusText}`);
@@ -455,27 +485,30 @@ export async function getChatHistory(
  */
 export async function getSessionMessages(
   sessionId: string,
-  token?: string
+  token?: string,
 ): Promise<{ messages: ChatMessage[]; sessionId: string }> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/chat/history/${sessionId}`, {
-    method: 'GET',
-    headers,
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/api/chat/history/${sessionId}`,
+    {
+      method: "GET",
+      headers,
+    },
+  );
 
   if (!response.ok) {
     throw new Error(`API error: ${response.statusText}`);
   }
 
   const data = await response.json();
-  
+
   // Transform messages
   return {
     sessionId: data.sessionId,
@@ -495,20 +528,23 @@ export async function getSessionMessages(
  */
 export async function deleteSession(
   sessionId: string,
-  token?: string
+  token?: string,
 ): Promise<{ success: boolean; message: string }> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/chat/history/${sessionId}`, {
-    method: 'DELETE',
-    headers,
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/api/chat/history/${sessionId}`,
+    {
+      method: "DELETE",
+      headers,
+    },
+  );
 
   if (!response.ok) {
     throw new Error(`API error: ${response.statusText}`);
@@ -614,6 +650,28 @@ function transformAgentStep(data: any): AgentStep {
     startedAt: data.started_at,
     completedAt: data.completed_at,
     resultSummary: data.result_summary,
+  };
+}
+
+/**
+ * Transform streaming response data from snake_case to camelCase
+ * This is needed because streaming responses come in raw backend format
+ */
+export function transformStreamingResponse(data: any): {
+  content: string;
+  contentHi?: string;
+  citations: Citation[];
+  statutes: Statute[];
+  caseLaws: CaseLaw[];
+  ipcBnsMappings: IPCBNSMapping[];
+} {
+  return {
+    content: data.content || "",
+    contentHi: data.content_hi,
+    citations: (data.citations || []).map(transformCitation),
+    statutes: (data.statutes || []).map(transformStatute),
+    caseLaws: (data.case_laws || []).map(transformCaseLaw),
+    ipcBnsMappings: (data.ipc_bns_mappings || []).map(transformMapping),
   };
 }
 

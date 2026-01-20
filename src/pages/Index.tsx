@@ -200,17 +200,18 @@ const Index = () => {
 
   // Map API messages to component format
   const formattedMessages = messages.map((msg) => {
+    console.log("Message full object:", msg); // Debug logging
     console.log("Message citations:", msg.citations); // Debug logging
     return {
       id: msg.id,
       role: msg.role,
       content: msg.content,
       contentHindi: msg.contentHindi,
-      citations: msg.citations?.map((c) => ({
-        id: c.id,
-        source: c.source,
-        url: c.url,
-        title: c.title,
+      citations: msg.citations?.map((c: any) => ({
+        id: c.id || String(Math.random()),
+        source: c.source || "indiankanoon",
+        url: c.url || "",
+        title: c.title || "Legal Citation",
         excerpt: c.excerpt, // Include the legal text excerpt
       })),
       timestamp: msg.timestamp,
