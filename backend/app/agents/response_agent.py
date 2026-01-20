@@ -56,16 +56,43 @@ class ResponseSynthesisAgent(BaseAgent):
         return context
     
     async def _generate_llm_response(self, context: AgentContext) -> Dict[str, str]:
-        """Generate response using LLM."""
+        """Generate response using LLM in the detected language."""
         try:
             # Build context for LLM
             llm_context = self._build_llm_context(context)
             
-            prompt = f"""You are NyayGuru AI Pro, an expert legal assistant for Indian law. 
+            # Use detected_language (auto-detected from user input) for primary response
+            response_language = context.detected_language or context.language or "en"
+            
+            if response_language == "hi":
+                prompt = f"""आप NyayGuru AI Pro हैं, भारतीय कानून के विशेषज्ञ कानूनी सहायक।
+उपयोगकर्ता के प्रश्न का व्यापक, सटीक और पेशेवर उत्तर हिंदी में दें।
+
+उपयोगकर्ता का प्रश्न: {context.query}
+पहचाना गया क्षेत्र: {context.detected_domain}
+
+{llm_context}
+
+दिशानिर्देश:
+1. विशिष्ट धाराओं और मामलों का उल्लेख करें
+2. कानूनी सटीकता बनाए रखते हुए सरल शब्दों में समझाएं
+3. यदि प्रासंगिक हो तो IPC और BNS के बीच मुख्य अंतर बताएं
+4. महत्वपूर्ण सिद्धांत स्थापित करने वाले ऐतिहासिक मामलों का उल्लेख करें
+5. जहां लागू हो वहां व्यावहारिक मार्गदर्शन शामिल करें
+6. पेशेवर कानूनी टोन बनाए रखें
+7. अस्वीकरण के साथ समाप्त करें
+
+हिंदी में उत्तर दें:"""
+                
+                response_hi = await self.llm_service.generate(prompt)
+                # Generate English version for bilingual support
+                english_prompt = f"Translate this Hindi legal response to English, maintaining legal terminology accuracy:\n\n{response_hi}"
+                response_en = await self.llm_service.generate(english_prompt)
+            else:
+                prompt = f"""You are NyayGuru AI Pro, an expert legal assistant for Indian law. 
 Generate a comprehensive, accurate, and professional response to the user's query.
 
 User Query: {context.query}
-Language: {context.language}
 Detected Domain: {context.detected_domain}
 
 {llm_context}
@@ -81,14 +108,10 @@ Guidelines:
 
 Generate response in English:"""
 
-            response_en = await self.llm_service.generate(prompt)
-            
-            # Generate Hindi version if needed
-            if context.language == "hi":
+                response_en = await self.llm_service.generate(prompt)
+                # Generate Hindi version for bilingual support
                 hindi_prompt = f"Translate this legal response to Hindi, maintaining legal terminology accuracy:\n\n{response_en}"
                 response_hi = await self.llm_service.generate(hindi_prompt)
-            else:
-                response_hi = await self._translate_to_hindi(response_en)
             
             return {
                 "en": response_en + DISCLAIMER_EN,
