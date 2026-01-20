@@ -229,7 +229,7 @@ async def websocket_chat(websocket: WebSocket, session_id: str):
 
 
 @router.get("/agents", response_model=List[AgentInfo])
-async def get_agents():
+def get_agents():
     """Get information about all available agents."""
     orchestrator = get_orchestrator()
     
@@ -276,7 +276,7 @@ async def get_agents():
 
 
 @router.get("/history")
-async def get_chat_history(
+def get_chat_history(
     limit: int = 20,
     current_user: dict = Depends(get_current_user)
 ):
@@ -351,7 +351,7 @@ async def get_chat_history(
 
 
 @router.get("/history/{session_id}")
-async def get_session_messages(
+def get_session_messages(
     session_id: str,
     current_user: dict = Depends(get_current_user)
 ):
@@ -397,7 +397,7 @@ async def get_session_messages(
 
 
 @router.delete("/history/{session_id}")
-async def delete_session(
+def delete_session(
     session_id: str,
     current_user: dict = Depends(get_current_user)
 ):

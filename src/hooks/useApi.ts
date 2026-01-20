@@ -365,14 +365,24 @@ export function useChatHistory() {
     const [sessions, setSessions] = useState<api.ChatSession[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { getToken } = useAuth();
+    const { getToken, isSignedIn } = useAuth();
 
     const fetchHistory = useCallback(async (limit: number = 20) => {
+        // Don't fetch if not signed in
+        if (!isSignedIn) {
+            setSessions([]);
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
         try {
             const token = await getToken() || undefined;
+            if (!token) {
+                setSessions([]);
+                return;
+            }
             const data = await api.getChatHistory(limit, token);
             setSessions(data.sessions);
         } catch (err) {
@@ -383,7 +393,7 @@ export function useChatHistory() {
         } finally {
             setLoading(false);
         }
-    }, [getToken]);
+    }, [getToken, isSignedIn]);
 
     const loadSession = useCallback(async (sessionId: string) => {
         try {
@@ -411,10 +421,14 @@ export function useChatHistory() {
         }
     }, [getToken]);
 
-    // Fetch history on mount
+    // Fetch history on mount and when sign-in status changes
     useEffect(() => {
-        fetchHistory();
-    }, []);
+        if (isSignedIn) {
+            fetchHistory();
+        } else {
+            setSessions([]);
+        }
+    }, [isSignedIn]);
 
     return {
         sessions,
