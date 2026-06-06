@@ -1,8 +1,8 @@
-# NyayGuru AI Pro
+# NyayShastra
 
 <div align="center">
 
-![NyayGuru AI Pro](https://img.shields.io/badge/NyayGuru-AI%20Pro-blueviolet?style=for-the-badge)
+![NyayShastra](https://img.shields.io/badge/NyayGuru-AI%20Pro-blueviolet?style=for-the-badge)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 
@@ -311,6 +311,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ for Indian Legal Community**
 
-*NyayGuru AI Pro - न्यायगुरु AI प्रो*
+*Nyayshastra*
 
 </div>
